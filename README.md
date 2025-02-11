@@ -15,4 +15,4 @@ https://library.noaa.gov/friendly.php?s=Section508/Web
 
 https://library.noaa.gov/Section508/CheckingAccessibility
 
-
+https://www.geeksforgeeks.org/text-summarization-in-nlp/
