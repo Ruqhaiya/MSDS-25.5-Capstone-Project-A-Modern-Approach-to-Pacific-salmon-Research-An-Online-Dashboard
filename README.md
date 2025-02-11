@@ -7,3 +7,12 @@ We'll begin by replicating their existing platform that lets researchers navigat
 We also plan to incorporate a life stage dictionary that categorizes these articles to make filtering easier. We’ll introduce a confidence score framework for each paper to quickly assess the reliability of the findings. 
 
 When completed this dashboard will aim to redefine how data supports salmon conservation. 
+
+
+# Important links:
+
+https://library.noaa.gov/friendly.php?s=Section508/Web
+
+https://library.noaa.gov/Section508/CheckingAccessibility
+
+
