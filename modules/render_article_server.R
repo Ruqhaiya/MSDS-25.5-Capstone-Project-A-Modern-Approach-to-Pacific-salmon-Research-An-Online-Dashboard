@@ -11,10 +11,10 @@ render_article_server <- function(output, paper) {
   }
 
   # loading extracted CSV dataset
-  extracted_csv <- read_csv("data/extracted_stressor_responses.csv")
+  # extracted_csv <- read_csv("data/extracted_stressor_responses.csv")
 
   # Find the CSV data for the selected article
-  csv_entry <- extracted_csv[extracted_csv$id == paper$id, "csv_data"]
+  # csv_entry <- extracted_csv[extracted_csv$id == paper$id, "csv_data"]
 
   # Rendering Metadata (From JSON)
   output$species_name <- renderText(ifelse(is.null(paper$species_common_name), "Not provided", paper$species_common_name))
