@@ -54,6 +54,11 @@ ui <- navbarPage(
                  actionButton("next_page", "Next >>"))
         ),
 
+        # Add Select All checkbox
+        fluidRow(
+          column(6, offset = 3, checkboxInput("select_all", "Select All", value = FALSE))
+        ),
+        
         fluidRow(
           column(6, offset = 3, uiOutput("paper_cards"))
         )

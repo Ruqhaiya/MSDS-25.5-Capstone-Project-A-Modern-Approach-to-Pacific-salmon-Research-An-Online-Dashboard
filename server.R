@@ -12,7 +12,6 @@ source("modules/upload_server.R", local = TRUE)
 source("modules/render_article_ui.R", local = TRUE)
 source("modules/render_article_server.R", local = TRUE)  
 
-
 server <- function(input, output, session) {
   
   # Function that filters data based on user input
@@ -29,8 +28,8 @@ server <- function(input, output, session) {
   reset_filters_server(input, session)
   
   # Render articles (paper cards)
-  render_papers_server(output, paginated_data)
-
+  render_papers_server(output, paginated_data, input, session)
+  
   # Function for the upload tab 
   upload_server(input, output, session)
 

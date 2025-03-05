@@ -1,6 +1,6 @@
 # nolint start
 
-render_papers_server <- function(output, paginated_data) {
+render_papers_server <- function(output, paginated_data, input, session) {
   output$paper_cards <- renderUI({
     data_to_display <- paginated_data()
     
@@ -22,6 +22,13 @@ render_papers_server <- function(output, paginated_data) {
           style = "border: 1px solid #ddd; padding: 15px; margin: 10px auto; background-color: #fff; 
                    border-radius: 8px; width: 90%; height: auto; 
                    display: flex; flex-direction: column; align-items: center;",
+          
+          # Checkbox for selecting the article
+          div(
+            style = "display: flex; align-items: center; width: 100%;",
+            checkboxInput(inputId = paste0("select_article_", paper$id), 
+                          label = NULL, value = FALSE)
+          ),
           
           # Clickable article title
           tags$a(
@@ -46,11 +53,17 @@ render_papers_server <- function(output, paginated_data) {
               tags$p("Activity: ", tags$strong(paper$activity)),
               tags$p("Geography: ", tags$strong(paper$geography))
             ),
-           
           )
         )
       })
     )
+  })
+  
+  # Observe "Select All" and update individual checkboxes
+  observeEvent(input$select_all, {
+    for (id in paginated_data()$id) {
+      updateCheckboxInput(session, paste0("select_article_", id), value = input$select_all)
+    }
   })
 }
 
