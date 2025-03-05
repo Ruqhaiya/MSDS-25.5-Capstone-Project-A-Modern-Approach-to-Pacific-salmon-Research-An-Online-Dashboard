@@ -1,3 +1,5 @@
+# nolint start
+
 render_papers_server <- function(output, paginated_data) {
   output$paper_cards <- renderUI({
     data_to_display <- paginated_data()
@@ -7,7 +9,8 @@ render_papers_server <- function(output, paginated_data) {
       return(tags$p("No research papers found.", style = "font-size: 18px; font-weight: bold; color: red;"))
     }
     
-    # Remove rows of cards where all values are NA
+    # removes rows of cards where all values are NA (based on our paginated logic, 
+    # it was showing 10 empty papers (NA values) even if there's no data for that search query)
     data_to_display <- data_to_display[rowSums(is.na(data_to_display)) != ncol(data_to_display), ]
     
     tagList(
@@ -50,3 +53,5 @@ render_papers_server <- function(output, paginated_data) {
     )
   })
 }
+
+# nolint end

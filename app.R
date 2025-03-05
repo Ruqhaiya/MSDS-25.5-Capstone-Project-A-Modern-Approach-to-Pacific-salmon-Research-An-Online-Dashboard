@@ -1,5 +1,4 @@
 # global settings, UI and Server components
-
 source("global.R")
 source("ui.R")
 source("server.R")
