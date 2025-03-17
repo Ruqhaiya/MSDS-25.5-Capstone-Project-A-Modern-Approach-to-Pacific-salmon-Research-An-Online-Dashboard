@@ -46,10 +46,7 @@ server <- function(input, output, session) {
   
   # Handle file uploads
   upload_server(input, output, session)
-  
-  # Generate comparable plots
-  compare_plot_server(input, output, session, db)
-  
+
   # Download feature
   download_json(output, paginated_data, input, session)
   
