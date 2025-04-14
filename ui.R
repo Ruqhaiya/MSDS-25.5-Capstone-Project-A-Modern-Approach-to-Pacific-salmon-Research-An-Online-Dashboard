@@ -3,6 +3,7 @@
 source("modules/upload_ui.R", local = TRUE)
 library(shinyjs)
 library(shiny)
+library(shinyWidgets)
 
 ui <- navbarPage(
   id = "main_navbar",
@@ -56,11 +57,33 @@ ui <- navbarPage(
         
         # Add Select All checkbox and Download to be in same row
         fluidRow(
-          column(6, 
+          column(12,
                  div(
-                   style = "display: flex; gap: 10px; flex-wrap: nowrap; align-items: center; margin-bottom: 10px;",
-                   downloadButton("download_all", "Download All", class = "btn btn-primary"),
-                   downloadButton("download_selected", "Download Selected", class = "btn btn-secondary"),
+                   style = "display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;",
+                   
+                   # Simulated dropdown: Download All
+                   dropdownButton(
+                     circle = FALSE,
+                     status = "primary",
+                     label = "Download All",
+                     icon = icon("download"),
+                     tooltip = tooltipOptions(title = "Choose format"),
+                     actionButton("trigger_json_all", "Download JSON", class = "btn-link"),
+                     actionButton("trigger_csv_all", "Download CSV", class = "btn-link")
+                   ),
+                   
+                   # Simulated dropdown: Download Selected
+                   dropdownButton(
+                     circle = FALSE,
+                     status = "success",
+                     label = "Download Selected",
+                     icon = icon("download"),
+                     tooltip = tooltipOptions(title = "Choose format"),
+                     actionButton("trigger_json_selected", "Download JSON", class = "btn-link"),
+                     actionButton("trigger_csv_selected", "Download CSV", class = "btn-link")
+                   ),
+                   
+                   # Select All checkbox
                    checkboxInput("select_all", "Select All", value = FALSE)
                  )
           )

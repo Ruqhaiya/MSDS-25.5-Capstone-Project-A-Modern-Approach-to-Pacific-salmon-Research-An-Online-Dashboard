@@ -31,4 +31,20 @@ if ("stressor_responses" %in% dbListTables(conn)) {
 # Close database connection to prevent memory leaks
 dbDisconnect(conn)
 
+# Helper: Parse csv_data_table with first row as header
+parse_csv_data_table <- function(df) {
+  if (nrow(df) > 1) {
+    header <- unlist(df[1, 1:(ncol(df) - 1)])
+    df <- df[-1, ]
+    colnames(df)[1:length(header)] <- header
+    
+    # Drop columns with name "NA" or NA (as a symbol or string)
+    bad_cols <- which(is.na(colnames(df)) | colnames(df) == "NA")
+    if (length(bad_cols) > 0) {
+      df <- df[, -bad_cols, drop = FALSE]
+    }
+  }
+  return(df)
+}
+
 # nolint end

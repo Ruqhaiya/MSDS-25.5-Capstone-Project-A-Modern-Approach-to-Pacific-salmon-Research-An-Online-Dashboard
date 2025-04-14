@@ -115,9 +115,11 @@ render_article_server <- function(output, paper_id, db) {
     }
   })
   
-  # Fetch Stressor Response Data
+  # Fetch and parse stressor response data 
   stressor_query <- paste0("SELECT * FROM csv_data_table WHERE id = ", paper_id)
   stressor_data <- dbGetQuery(db, stressor_query)
+  stressor_data <- parse_csv_data_table(stressor_data)
+  
   
   # Render stressor response table
   output$csv_table <- renderTable({
@@ -127,8 +129,8 @@ render_article_server <- function(output, paper_id, db) {
       data.frame(Message = "No data available for this article")
     }
   })
- 
-   # Render stressor response plot
+
+  # Render stressor response plot
   output$stressor_plot <- renderPlot({
     
     # Check for data and present error message if none

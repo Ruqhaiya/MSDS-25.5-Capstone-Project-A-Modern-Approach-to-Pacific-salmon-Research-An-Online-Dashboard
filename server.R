@@ -48,7 +48,74 @@ server <- function(input, output, session) {
   upload_server(input, output, session)
 
   # Download feature
-  download_json(output, paginated_data, input, session)
+  download_json(output, filtered_data, input, session)
+  download_csv(output, filtered_data, input, session)
+  
+  # Download All JSON
+  observeEvent(input$trigger_json_all, {
+    showModal(modalDialog(
+      title = span(icon("file-code"), "Download All - JSON"),
+      div(
+        style = "text-align: center; padding: 20px;",
+        downloadButton("download_all_json", "Click to Download JSON", class = "btn btn-primary btn-lg")
+      ),
+      footer = modalButton("Close"),
+      size = "m",
+      easyClose = TRUE
+    ))
+  })
+  observeEvent(input$download_all_json, { removeModal() })
+  
+  
+  # Download All CSV
+  observeEvent(input$trigger_csv_all, {
+    showModal(modalDialog(
+      title = span(icon("file-csv"), "Download All - CSV"),
+      div(
+        style = "text-align: center; padding: 20px;",
+        downloadButton("download_all_csv", "Click to Download CSV", class = "btn btn-success btn-lg")
+      ),
+      footer = modalButton("Close"),
+      size = "m",
+      easyClose = TRUE
+    ))
+  })
+  observeEvent(input$download_all_csv, { removeModal() })
+  
+  
+  # Download Selected JSON
+  observeEvent(input$trigger_json_selected, {
+    showModal(modalDialog(
+      title = span(icon("file-code"), "Download Selected - JSON"),
+      div(
+        style = "text-align: center; padding: 20px;",
+        downloadButton("download_selected_json", "Click to Download JSON", class = "btn btn-primary btn-lg")
+      ),
+      footer = modalButton("Close"),
+      size = "m",
+      easyClose = TRUE
+    ))
+  })
+  observeEvent(input$download_selected_json, { removeModal() })
+  
+  
+  # Download Selected CSV
+  observeEvent(input$trigger_csv_selected, {
+    showModal(modalDialog(
+      title = span(icon("file-csv"), "Download Selected - CSV"),
+      div(
+        style = "text-align: center; padding: 20px;",
+        downloadButton("download_selected_csv", "Click to Download CSV", class = "btn btn-success btn-lg")
+      ),
+      footer = modalButton("Close"),
+      size = "m",
+      easyClose = TRUE
+    ))
+  })
+  observeEvent(input$download_selected_csv, { removeModal() })
+  
+  
+  
   
   # Handle article display logic
   observe({
