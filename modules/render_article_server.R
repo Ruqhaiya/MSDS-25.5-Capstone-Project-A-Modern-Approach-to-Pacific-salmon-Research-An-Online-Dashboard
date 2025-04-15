@@ -132,36 +132,42 @@ render_article_server <- function(output, paper_id, db) {
 
   # Render stressor response plot
   output$stressor_plot <- renderPlot({
-    
-    # Check for data and present error message if none
     if (nrow(stressor_data) == 0) {
       plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
       text(1, 1, "No data available for this article", col = "black", cex = 1.5, font = 2)
       return()
     }
     
-    # Standardize column names
-    colnames(stressor_data) <- c("stressor_x", "mean_system_capacity", "sd", "low_limit", "up_limit", "extra", "id")
+    # Identify first two numeric columns
+    numeric_cols <- Filter(function(col) {
+      vals <- suppressWarnings(as.numeric(stressor_data[[col]]))
+      sum(!is.na(vals)) >= 2  # Only consider columns with 2+ usable numbers
+    }, colnames(stressor_data))
     
-    # Convert numeric columns
-    num_cols <- c("stressor_x", "mean_system_capacity", "sd", "low_limit", "up_limit")
-    stressor_data[num_cols] <- lapply(stressor_data[num_cols], function(x) suppressWarnings(as.numeric(x)))
-    
-    # Remove NA rows before plotting
-    stressor_data <- stressor_data[complete.cases(stressor_data[num_cols]), ]
-    
-    # If all numeric values are NA, show an error message instead of a blank plot
-    if (nrow(stressor_data) == 0) {
+    if (length(numeric_cols) < 2) {
       plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-      text(1, 1, "No valid numeric data available for plotting", col = "black", cex = 1.5, font = 2)
+      text(1, 1, "Insufficient numeric columns for plotting", col = "red", cex = 1.2)
       return()
     }
     
-    # Plot stressor response data
+    x_col <- numeric_cols[1]
+    y_col <- numeric_cols[2]
+    
+    stressor_data[[x_col]] <- suppressWarnings(as.numeric(stressor_data[[x_col]]))
+    stressor_data[[y_col]] <- suppressWarnings(as.numeric(stressor_data[[y_col]]))
+    
+    clean_data <- stressor_data[complete.cases(stressor_data[, c(x_col, y_col)]), ]
+    
+    if (nrow(clean_data) == 0) {
+      plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+      text(1, 1, "No valid data points for plotting", col = "black", cex = 1.5, font = 2)
+      return()
+    }
+    
     plot(
-      stressor_data$stressor_x, stressor_data$mean_system_capacity,
+      clean_data[[x_col]], clean_data[[y_col]],
       type = "o", col = "blue", pch = 16, lwd = 2,
-      xlab = "Stressor (X)", ylab = "Mean System Capacity (%)",
+      xlab = x_col, ylab = y_col,
       main = paste("Stressor Response for", safe_get(paper, "stressor_name"))
     )
   })
