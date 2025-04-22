@@ -1,6 +1,7 @@
 # nolint start
 
 library(shinyjs)
+library(dygraphs)
 
 render_article_ui <- function(output, session) {
   output$article_content <- renderUI({
@@ -75,6 +76,18 @@ render_article_ui <- function(output, session) {
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
           actionLink("toggle_plot", strong("Stressor Response Chart ▼")),
           hidden(div(id = "plot_section", plotOutput("stressor_plot")))
+      ),
+      
+      # Interactive Plot Section using dygraphs
+      # Interactive Plot Section using Plotly
+      div(
+        style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
+        actionLink("toggle_interactive_plot", strong("Interactive Plot ▼")),
+        hidden(div(id = "interactive_plot_section", plotlyOutput("interactive_plot")))
+      
+      
+          
+          
       )
     )
   })

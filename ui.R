@@ -8,17 +8,17 @@ library(shinyWidgets)
 ui <- navbarPage(
   id = "main_navbar",
   title = "NOAA",
-  selected = "dashboard",  # Dashboard is selected by default
+  selected = "dashboard",
   
   # Dashboard Tab
   tabPanel(
     title = "SRF Dashboard",
-    value = "dashboard",  # Correct tab navigation
+    value = "dashboard",
     
     fluidPage(
       useShinyjs(),
       
-      # Ensure the dashboard content is only visible when no article is selected
+      # Dashboard visible only when no article is selected
       conditionalPanel(
         condition = "!window.location.search.includes('article_id')",
         
@@ -27,20 +27,39 @@ ui <- navbarPage(
           column(4, actionButton("toggle_filters", "Show Filters", icon = icon("filter")))
         ),
         
+        # Hidden numeric inputs
+        shinyjs::hidden(
+          fluidRow(
+            column(6, numericInput("page", NULL, value = 1, min = 1)),
+            column(6, numericInput("page_size", NULL, value = 10, min = 1))
+          )
+        ),
+        
         conditionalPanel(
           condition = "input.toggle_filters % 2 == 1",
+          
           fluidRow(
-            column(3, selectInput("stressor", "Stressor Name", c("All", stressor_names))),
-            column(3, selectInput("stressor_metric", "Stressor Metric", c("All", stressor_metrics))),
-            column(3, selectInput("species", "Species Common Name", c("All", species_names))),
-            column(3, selectInput("geography", "Geography (Region)", c("All", geographies)))
+            column(3, pickerInput("stressor", "Stressor Name", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("stressor_metric", "Stressor Metric", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("species", "Species Common Name", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("geography", "Geography (Region)", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE)))
           ),
+          
           fluidRow(
-            column(3, selectInput("life_stage", "Life Stage", c("All", life_stages))),
-            column(3, selectInput("activity", "Activity", c("All", activities))),
-            column(3, selectInput("genus_latin", "Genus Latin", c("All", genus_latin))),
-            column(3, selectInput("species_latin", "Species Latin", c("All", species_latin)))
+            column(3, pickerInput("life_stage", "Life Stage", choices = life_stages, multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("activity", "Activity", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("genus_latin", "Genus Latin", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+            column(3, pickerInput("species_latin", "Species Latin", choices = list(), multiple = TRUE,
+                                  options = list(`actions-box` = TRUE, `live-search` = TRUE)))
           ),
+          
           fluidRow(
             column(12, div(style = "text-align: right;",
                            actionLink("reset_filters", "Reset Filters",
@@ -48,20 +67,21 @@ ui <- navbarPage(
           )
         ),
         
+        # Pagination
         fluidRow(
-          column(4, offset = 4, 
-                 actionButton("prev_page", "<< Previous"), 
-                 textOutput("page_info", inline = TRUE), 
+          column(4, offset = 4,
+                 actionButton("prev_page", "<< Previous"),
+                 textOutput("page_info", inline = TRUE),
                  actionButton("next_page", "Next >>"))
         ),
         
-        # Add Select All checkbox and Download to be in same row
+        # Select All & Download Row
         fluidRow(
           column(12,
                  div(
                    style = "display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;",
                    
-                   # Simulated dropdown: Download All
+                   # Download All
                    dropdownButton(
                      circle = FALSE,
                      status = "primary",
@@ -72,7 +92,7 @@ ui <- navbarPage(
                      actionButton("trigger_csv_all", "Download CSV", class = "btn-link")
                    ),
                    
-                   # Simulated dropdown: Download Selected
+                   # Download Selected
                    dropdownButton(
                      circle = FALSE,
                      status = "success",
@@ -83,22 +103,21 @@ ui <- navbarPage(
                      actionButton("trigger_csv_selected", "Download CSV", class = "btn-link")
                    ),
                    
-                   # Select All checkbox
+                   # Select All Checkbox
                    checkboxInput("select_all", "Select All", value = FALSE)
                  )
           )
         ),
         
-        # Paper Cards Section (Centered)
+        # Paper Cards
         fluidRow(
           column(6, offset = 3, uiOutput("paper_cards"))
         )
       ),
       
-      # Article Display Section (Shows only when an article is selected)
+      # Article View
       conditionalPanel(
         condition = "window.location.search.includes('article_id')",
-        
         fluidRow(
           column(8, offset = 2, uiOutput("article_content"))
         )
@@ -106,7 +125,7 @@ ui <- navbarPage(
     )
   ),
   
-  # Upload Data Tab
+  # Upload Tab
   tabPanel(
     title = "Upload Data",
     value = "upload_data",

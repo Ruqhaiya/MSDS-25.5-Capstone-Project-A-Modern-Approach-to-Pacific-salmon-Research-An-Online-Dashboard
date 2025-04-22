@@ -24,6 +24,7 @@ if ("stressor_responses" %in% dbListTables(conn)) {
   genus_latin <- unique(data$genus_latin)
   species_latin <- unique(data$species_latin)
   
+  
 } else {
   warning("Table `stressor_responses` does not exist in the database.")
 }

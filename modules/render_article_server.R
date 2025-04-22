@@ -4,6 +4,8 @@ library(DBI)
 library(RSQLite)
 library(jsonlite)
 library(ggplot2)
+library(zoo)
+library(plotly)
 
 render_article_server <- function(output, paper_id, db) {
   
@@ -171,6 +173,50 @@ render_article_server <- function(output, paper_id, db) {
       main = paste("Stressor Response for", safe_get(paper, "stressor_name"))
     )
   })
+    
+  output$interactive_plot <- renderPlotly({
+    if (nrow(stressor_data) == 0) return(NULL)
+    
+    numeric_cols <- Filter(function(col) {
+      vals <- suppressWarnings(as.numeric(stressor_data[[col]]))
+      sum(!is.na(vals)) >= 2
+    }, colnames(stressor_data))
+    
+    if (length(numeric_cols) < 2) return(NULL)
+    
+    x_col <- numeric_cols[1]
+    y_col <- numeric_cols[2]
+    
+    stressor_data[[x_col]] <- suppressWarnings(as.numeric(stressor_data[[x_col]]))
+    stressor_data[[y_col]] <- suppressWarnings(as.numeric(stressor_data[[y_col]]))
+    
+    clean_data <- stressor_data[complete.cases(stressor_data[, c(x_col, y_col)]), ]
+    
+    if (nrow(clean_data) == 0) return(NULL)
+    
+    plot_ly(
+      data = clean_data,
+      x = ~get(x_col),
+      y = ~get(y_col),
+      type = "scatter",
+      mode = "lines+markers",
+      line = list(color = "blue"),
+      marker = list(size = 6)
+    ) %>%
+      layout(
+        title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
+        xaxis = list(title = x_col),
+        yaxis = list(title = y_col)
+      )
+  })
+  
+  
+  
+  
+  
 }
 
+    
 # nolint end
+    
+ 

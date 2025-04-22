@@ -5,7 +5,7 @@ source("global.R")
 source("modules/filters.R", local = TRUE)
 source("modules/pagination.R", local = TRUE)
 source("modules/render_papers.R", local = TRUE)
-source("modules/update_filters.R", local = TRUE) 
+source("modules/update_filters.R", local = TRUE)
 source("modules/toggle_filters.R", local = TRUE)
 source("modules/reset_filters.R", local = TRUE)
 source("modules/upload_server.R", local = TRUE)
@@ -28,8 +28,45 @@ server <- function(input, output, session) {
     stop("Error: Table `stressor_responses` does not exist in the database.")
   }
   
+  # Read the table into a local data frame
+  data <- dbReadTable(dbConnect(SQLite(), "data/stressor_responses.sqlite"), "stressor_responses")
+  
   # Filter data based on user input
   filtered_data <- filter_data_server(input, data, session)
+  
+  progressive_data <- reactive({
+    req(data)
+    df <- data
+    
+    if (!is.null(input$stressor) && length(input$stressor) > 0) {
+      df <- df[df$stressor_name %in% input$stressor, ]
+    }
+    if (!is.null(input$stressor_metric) && length(input$stressor_metric) > 0) {
+      df <- df[df$specific_stressor_metric %in% input$stressor_metric, ]
+    }
+    if (!is.null(input$species) && length(input$species) > 0) {
+      df <- df[df$species_common_name %in% input$species, ]
+    }
+    if (!is.null(input$geography) && length(input$geography) > 0) {
+      df <- df[df$geography %in% input$geography, ]
+    }
+    if (!is.null(input$life_stage) && length(input$life_stage) > 0) {
+      df <- df[Reduce(`|`, lapply(input$life_stage, function(stage) {
+        grepl(stage, df$life_stages, ignore.case = TRUE)
+      })), ]
+    }
+    if (!is.null(input$activity) && length(input$activity) > 0) {
+      df <- df[df$activity %in% input$activity, ]
+    }
+    if (!is.null(input$genus_latin) && length(input$genus_latin) > 0) {
+      df <- df[df$genus_latin %in% input$genus_latin, ]
+    }
+    if (!is.null(input$species_latin) && length(input$species_latin) > 0) {
+      df <- df[df$species_latin %in% input$species_latin, ]
+    }
+    
+    df
+  })
   
   # Pagination logic
   pagination <- pagination_server(input, filtered_data)
@@ -37,7 +74,7 @@ server <- function(input, output, session) {
   output$page_info <- renderText(pagination$page_info())
   
   # Update filters dynamically
-  update_filters_server(input, session, filtered_data)
+  update_filters_server(input, output, session, data)
   toggle_filters_server(input, session)
   reset_filters_server(input, session)
   
@@ -46,7 +83,7 @@ server <- function(input, output, session) {
   
   # Handle file uploads
   upload_server(input, output, session)
-
+  
   # Download feature
   download_json(output, filtered_data, input, session)
   download_csv(output, filtered_data, input, session)
@@ -66,7 +103,6 @@ server <- function(input, output, session) {
   })
   observeEvent(input$download_all_json, { removeModal() })
   
-  
   # Download All CSV
   observeEvent(input$trigger_csv_all, {
     showModal(modalDialog(
@@ -81,7 +117,6 @@ server <- function(input, output, session) {
     ))
   })
   observeEvent(input$download_all_csv, { removeModal() })
-  
   
   # Download Selected JSON
   observeEvent(input$trigger_json_selected, {
@@ -98,7 +133,6 @@ server <- function(input, output, session) {
   })
   observeEvent(input$download_selected_json, { removeModal() })
   
-  
   # Download Selected CSV
   observeEvent(input$trigger_csv_selected, {
     showModal(modalDialog(
@@ -114,22 +148,27 @@ server <- function(input, output, session) {
   })
   observeEvent(input$download_selected_csv, { removeModal() })
   
-  
-  
-  
   # Handle article display logic
   observe({
     query <- parseQueryString(session$clientData$url_search)
     
     if (!is.null(query$article_id)) {
-      article_id <- as.numeric(query$article_id)  # Convert ID to numeric
+      article_id <- as.numeric(query$article_id)
       
-      # Ensure valid article data
       if (!is.na(article_id)) {
-        render_article_ui(output, session)
-        render_article_server(output, article_id, db) 
+        tryCatch({
+          render_article_ui(output, session)
+          render_article_server(output, article_id, db)
+        }, error = function(e) {
+          output$article_content <- renderUI({
+            tags$p(paste("Error rendering article:", e$message),
+                   style = "color: red; font-weight: bold;")
+          })
+          print(e)
+        })
       } else {
-        output$article_content <- renderUI(tags$p("Article not found.", style = "color: red; font-weight: bold;"))
+        output$article_content <- renderUI(tags$p("Article not found.",
+                                                  style = "color: red; font-weight: bold;"))
       }
     }
   })
@@ -142,6 +181,10 @@ server <- function(input, output, session) {
   observeEvent(input$toggle_csv, { toggle("csv_section") })
   observeEvent(input$toggle_plot, { toggle("plot_section") })
   observeEvent(input$generate_plot, { show("compare_plot") })
+  observeEvent(filtered_data(), { updateNumericInput(session, "page", value = 1) })
+  observeEvent(input$toggle_interactive_plot, { toggle("interactive_plot_section") })
+  observeEvent(input$prev_page, { updateNumericInput(session, "page", value = max(1, input$page - 1)) })
+  observeEvent(input$next_page, { updateNumericInput(session, "page", value = input$page + 1) })
   
   # Close the database connection when the session ends
   session$onSessionEnded(function() {
