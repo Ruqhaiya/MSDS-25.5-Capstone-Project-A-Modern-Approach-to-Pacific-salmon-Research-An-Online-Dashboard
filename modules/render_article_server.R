@@ -35,8 +35,8 @@ render_article_server <- function(output, paper_id, db) {
   }
   
   # Parse JSON fields
-  paper$citations <- safe_fromJSON(paper$`citations.citation_text`)
-  paper$citation_links <- safe_fromJSON(paper$`citations.citation_links`)
+  paper$citations <- safe_fromJSON(paper$citations_citation_text)
+  paper$citation_links <- safe_fromJSON(paper$citations_citation_links)
   paper$images <- safe_fromJSON(paper$images)
   
   # Function to safely retrieve values
@@ -52,14 +52,14 @@ render_article_server <- function(output, paper_id, db) {
   output$specific_stressor_metric <- renderText(safe_get(paper, "specific_stressor_metric"))
   output$stressor_units <- renderText(safe_get(paper, "stressor_units"))
   output$life_stage <- renderText(safe_get(paper, "life_stages"))
-  output$description_overview <- renderText(safe_get(paper, "description.overview"))
-  output$function_derivation <- renderText(safe_get(paper, "description.function_derivation"))
+  output$description_overview <- renderText(safe_get(paper, "description_overview"))
+  output$function_derivation <- renderText(safe_get(paper, "description_function_derivation"))
   
   # Render Citations
   output$citations <- renderUI({
     
     # Extract citation texts and ensure they are properly formatted
-    citation_texts <- safe_get(paper, "citations.citation_text")
+    citation_texts <- safe_get(paper, "citations_citation_text")
     
     if (!is.null(citation_texts) && is.character(citation_texts) && nzchar(citation_texts)) {
       citation_texts <- unlist(strsplit(citation_texts, "\\\\r\\\\n\\\\r\\\\n"))
@@ -68,7 +68,7 @@ render_article_server <- function(output, paper_id, db) {
     }
     
     # Extract and parse citation links
-    citation_links_raw <- safe_get(paper, "citations.citation_links")
+    citation_links_raw <- safe_get(paper, "citations_citation_links")
     citation_links <- safe_fromJSON(citation_links_raw)
     
     # Ensure citation links are structured correctly
@@ -101,8 +101,6 @@ render_article_server <- function(output, paper_id, db) {
     )
   })
   
-
-  
   # Render Images
   output$article_images <- renderUI({
     image_url <- if (is.data.frame(paper$images)) as.character(paper$images$image_url) else paper$images
@@ -117,22 +115,46 @@ render_article_server <- function(output, paper_id, db) {
     }
   })
   
-  # Fetch and parse stressor response data 
+  # Fetch stressor response data (already cleaned in long format)
   stressor_query <- paste0("SELECT * FROM csv_data_table WHERE id = ", paper_id)
   stressor_data <- dbGetQuery(db, stressor_query)
-  stressor_data <- parse_csv_data_table(stressor_data)
-  
   
   # Render stressor response table
   output$csv_table <- renderTable({
-    if (nrow(stressor_data) > 0) {
-      stressor_data
-    } else {
-      data.frame(Message = "No data available for this article")
+    if (nrow(stressor_data) == 0) {
+      return(data.frame(Message = "No data available for this article"))
     }
+    
+    display_cols <- c("stressor_value", "scaled_response_value", "sd", "low_limit", "up_limit", "article_stressor_label", "scaled_response_label")
+    display_df <- stressor_data[, intersect(display_cols, colnames(stressor_data)), drop = FALSE]
+    
+    smart_round <- function(col) {
+      col <- suppressWarnings(as.numeric(col))
+      if (all(col %% 1 == 0, na.rm = TRUE)) return(as.integer(col))
+      return(round(col, 2))
+    }
+    
+    for (col in c("sd", "low_limit", "up_limit")) {
+      if (col %in% names(display_df)) {
+        display_df[[col]] <- smart_round(display_df[[col]])
+      }
+    }
+    
+    x_label <- if ("article_stressor_label" %in% names(stressor_data)) unique(na.omit(stressor_data$article_stressor_label))[1] else "X"
+    y_label <- if ("scaled_response_label" %in% names(stressor_data)) unique(na.omit(stressor_data$scaled_response_label))[1] else "Y"
+    
+    colnames(display_df)[colnames(display_df) == "stressor_value"] <- x_label
+    colnames(display_df)[colnames(display_df) == "scaled_response_value"] <- y_label
+    colnames(display_df)[colnames(display_df) == "sd"] <- "Standard Deviation"
+    colnames(display_df)[colnames(display_df) == "low_limit"] <- "Lower Limit"
+    colnames(display_df)[colnames(display_df) == "up_limit"] <- "Upper Limit"
+    
+    display_df <- display_df[, !(names(display_df) %in% c("article_stressor_label", "scaled_response_label")), drop = FALSE]
+    
+    display_df
   })
-
-  # Render stressor response plot
+  
+  # Render static plot
   output$stressor_plot <- renderPlot({
     if (nrow(stressor_data) == 0) {
       plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
@@ -140,25 +162,9 @@ render_article_server <- function(output, paper_id, db) {
       return()
     }
     
-    # Identify first two numeric columns
-    numeric_cols <- Filter(function(col) {
-      vals <- suppressWarnings(as.numeric(stressor_data[[col]]))
-      sum(!is.na(vals)) >= 2  # Only consider columns with 2+ usable numbers
-    }, colnames(stressor_data))
-    
-    if (length(numeric_cols) < 2) {
-      plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-      text(1, 1, "Insufficient numeric columns for plotting", col = "red", cex = 1.2)
-      return()
-    }
-    
-    x_col <- numeric_cols[1]
-    y_col <- numeric_cols[2]
-    
-    stressor_data[[x_col]] <- suppressWarnings(as.numeric(stressor_data[[x_col]]))
-    stressor_data[[y_col]] <- suppressWarnings(as.numeric(stressor_data[[y_col]]))
-    
-    clean_data <- stressor_data[complete.cases(stressor_data[, c(x_col, y_col)]), ]
+    stressor_data$stressor_value <- suppressWarnings(as.numeric(stressor_data$stressor_value))
+    stressor_data$scaled_response_value <- suppressWarnings(as.numeric(stressor_data$scaled_response_value))
+    clean_data <- stressor_data[complete.cases(stressor_data[, c("stressor_value", "scaled_response_value")]), ]
     
     if (nrow(clean_data) == 0) {
       plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
@@ -167,56 +173,43 @@ render_article_server <- function(output, paper_id, db) {
     }
     
     plot(
-      clean_data[[x_col]], clean_data[[y_col]],
+      clean_data$stressor_value, clean_data$scaled_response_value,
       type = "o", col = "blue", pch = 16, lwd = 2,
-      xlab = x_col, ylab = y_col,
+      xlab = clean_data$article_stressor_label[1],
+      ylab = clean_data$scaled_response_label[1],
       main = paste("Stressor Response for", safe_get(paper, "stressor_name"))
     )
   })
-    
+  
+  # Render interactive plot
   output$interactive_plot <- renderPlotly({
-    if (nrow(stressor_data) == 0) return(NULL)
+    stressor_data$stressor_value <- suppressWarnings(as.numeric(stressor_data$stressor_value))
+    stressor_data$scaled_response_value <- suppressWarnings(as.numeric(stressor_data$scaled_response_value))
+    clean_data <- stressor_data[complete.cases(stressor_data[, c("stressor_value", "scaled_response_value")]), ]
     
-    numeric_cols <- Filter(function(col) {
-      vals <- suppressWarnings(as.numeric(stressor_data[[col]]))
-      sum(!is.na(vals)) >= 2
-    }, colnames(stressor_data))
+    if (nrow(clean_data) == 0) {
+      return(plot_ly(type = "scatter", mode = "markers", height = 200) %>%
+               layout(
+                 margin = list(t = 20, b = 20),
+                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE),
+                 annotations = list(list(
+                   text = "No data available for this article",
+                   xref = "paper", yref = "paper",
+                   x = 0.5, y = 0.5, showarrow = FALSE,
+                   font = list(size = 16, color = "black")
+                 ))
+               ))
+    }
     
-    if (length(numeric_cols) < 2) return(NULL)
-    
-    x_col <- numeric_cols[1]
-    y_col <- numeric_cols[2]
-    
-    stressor_data[[x_col]] <- suppressWarnings(as.numeric(stressor_data[[x_col]]))
-    stressor_data[[y_col]] <- suppressWarnings(as.numeric(stressor_data[[y_col]]))
-    
-    clean_data <- stressor_data[complete.cases(stressor_data[, c(x_col, y_col)]), ]
-    
-    if (nrow(clean_data) == 0) return(NULL)
-    
-    plot_ly(
-      data = clean_data,
-      x = ~get(x_col),
-      y = ~get(y_col),
-      type = "scatter",
-      mode = "lines+markers",
-      line = list(color = "blue"),
-      marker = list(size = 6)
-    ) %>%
+    plot_ly(clean_data, x = ~stressor_value, y = ~scaled_response_value,
+            type = "scatter", mode = "lines+markers",
+            line = list(color = "blue"), marker = list(size = 6)) %>%
       layout(
         title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
-        xaxis = list(title = x_col),
-        yaxis = list(title = y_col)
+        xaxis = list(title = clean_data$article_stressor_label[1]),
+        yaxis = list(title = clean_data$scaled_response_label[1])
       )
   })
-  
-  
-  
-  
-  
 }
 
-    
 # nolint end
-    
- 
