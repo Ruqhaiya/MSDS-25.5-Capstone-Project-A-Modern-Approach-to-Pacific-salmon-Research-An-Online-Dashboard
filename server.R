@@ -8,7 +8,6 @@ source("modules/render_papers.R", local = TRUE)
 source("modules/update_filters.R", local = TRUE)
 source("modules/toggle_filters.R", local = TRUE)
 source("modules/reset_filters.R", local = TRUE)
-source("modules/upload_server.R", local = TRUE)
 source("modules/render_article_ui.R", local = TRUE)
 source("modules/render_article_server.R", local = TRUE)
 source("modules/downloads.R", local = TRUE)
@@ -81,8 +80,6 @@ server <- function(input, output, session) {
   # Render articles (paper cards)
   render_papers_server(output, paginated_data, input, session)
   
-  # Handle file uploads
-  upload_server(input, output, session)
   
   # Download feature
   download_json(output, filtered_data, input, session)

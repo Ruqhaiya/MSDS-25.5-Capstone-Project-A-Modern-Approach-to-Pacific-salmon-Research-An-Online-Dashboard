@@ -1,6 +1,5 @@
 # nolint start
 
-source("modules/upload_ui.R", local = TRUE)
 library(shinyjs)
 library(shiny)
 library(shinyWidgets)
@@ -123,13 +122,6 @@ ui <- navbarPage(
         )
       )
     )
-  ),
-  
-  # Upload Tab
-  tabPanel(
-    title = "Upload Data",
-    value = "upload_data",
-    upload_ui("upload_ui")
   )
 )
 
