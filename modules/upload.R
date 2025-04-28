@@ -48,7 +48,7 @@ upload_ui <- function(id) {
                          accept = c(".csv"),
                          buttonLabel = "Choose File",
                          placeholder = "No file chosen"),
-               helpText("Upload a CSV data file for the SR relationship. Columns (with headings) should include stressor, response, SD, low.limit, and up.limit.",
+               helpText("Upload a CSV data file for the SR relationship. Columns (with headings) should include stressor, response, sd, low_limit, and up_limit.",
                         "One file only.", "2 MB limit.", "Allowed types: csv.")
              )
       )
