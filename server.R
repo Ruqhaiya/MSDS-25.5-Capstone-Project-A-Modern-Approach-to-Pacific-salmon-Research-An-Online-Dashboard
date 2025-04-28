@@ -11,6 +11,7 @@ source("modules/reset_filters.R", local = TRUE)
 source("modules/render_article_ui.R", local = TRUE)
 source("modules/render_article_server.R", local = TRUE)
 source("modules/downloads.R", local = TRUE)
+source("modules/upload.R", local = TRUE)
 
 server <- function(input, output, session) {
   
@@ -76,6 +77,9 @@ server <- function(input, output, session) {
   update_filters_server(input, output, session, data)
   toggle_filters_server(input, session)
   reset_filters_server(input, session)
+  
+  #calling upload funtion
+  upload_server("upload")
   
   # Render articles (paper cards)
   render_papers_server(output, paginated_data, input, session)
@@ -187,6 +191,9 @@ server <- function(input, output, session) {
   session$onSessionEnded(function() {
     dbDisconnect(db)
   })
+  
+  
+
 }
 
 # nolint end

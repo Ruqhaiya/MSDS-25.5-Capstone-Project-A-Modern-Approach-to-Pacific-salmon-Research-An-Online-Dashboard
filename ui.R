@@ -3,6 +3,7 @@
 library(shinyjs)
 library(shiny)
 library(shinyWidgets)
+source("modules/upload.R", local = TRUE)
 
 ui <- navbarPage(
   id = "main_navbar",
@@ -122,6 +123,13 @@ ui <- navbarPage(
         )
       )
     )
+  ),
+  
+  # Test Upload Tab
+  tabPanel(
+    title = "Upload Data",
+    value = "upload_data",
+    upload_ui("upload")
   )
 )
 
