@@ -147,9 +147,9 @@ server <- function(input, output, session) {
       easyClose = TRUE
     ))
   })
-  observeEvent(input$download_selected_csv, { removeModal() })
-  
   # Handle article display logic
+  
+  observeEvent(input$download_selected_csv, { removeModal() })
   observe({
     query <- parseQueryString(session$clientData$url_search)
     
@@ -159,17 +159,20 @@ server <- function(input, output, session) {
       if (!is.na(article_id)) {
         tryCatch({
           render_article_ui(output, session)
-          render_article_server(output, article_id, db)
+          render_article_server(input, output, session, article_id, db)
         }, error = function(e) {
           output$article_content <- renderUI({
-            tags$p(paste("Error rendering article:", e$message),
-                   style = "color: red; font-weight: bold;")
+            tags$p(
+              paste("Error rendering article:", e$message),
+              style = "color: red; font-weight: bold;"
+            )
           })
           print(e)
         })
       } else {
-        output$article_content <- renderUI(tags$p("Article not found.",
-                                                  style = "color: red; font-weight: bold;"))
+        output$article_content <- renderUI(
+          tags$p("Article not found.", style = "color: red; font-weight: bold;")
+        )
       }
     }
   })

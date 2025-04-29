@@ -7,7 +7,7 @@ library(ggplot2)
 library(zoo)
 library(plotly)
 
-render_article_server <- function(output, paper_id, db) {
+render_article_server <- function(input, output, session, paper_id, db) {
   
   # Ensure database connection is provided
   if (missing(db)) {
@@ -24,6 +24,53 @@ render_article_server <- function(output, paper_id, db) {
   }
   
   paper <- paper[1, ]  # Ensure single-row data
+  
+  ## ←–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  ## EXPAND/COLLAPSE BUTTONS HANDLERS HERE
+  ## ←–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  
+  # vector of all section div IDs
+  all_ids <- c(
+    "metadata_section", "description_section", "citations_section",
+    "images_section", "csv_section", "plot_section", "interactive_plot_section"
+  )
+  
+  # expand all
+  
+  # a named vector of base labels:
+  base_labels <- c(
+    toggle_metadata       = "Article Metadata",
+    toggle_description    = "Description & Function Details",
+    toggle_citations      = "Citation(s)",
+    toggle_images         = "Images",
+    toggle_csv            = "Stressor Response Data",
+    toggle_plot           = "Stressor Response Chart",
+    toggle_interactive_plot = "Interactive Plot"
+  )
+  
+  observeEvent(input$expand_all, {
+    lapply(all_ids, show)
+    for (id in names(base_labels)) {
+      updateActionLink(
+        session, id,
+        label = paste0(base_labels[id], " ▲")
+      )
+    }
+  })
+  
+  observeEvent(input$collapse_all, {
+    lapply(all_ids, hide)
+    for (id in names(base_labels)) {
+      updateActionLink(
+        session, id,
+        label = paste0(base_labels[id], " ▼")
+      )
+    }
+  })
+  ## ←–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  ##  End expand/collapse code
+  ## ←–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  
   
   # Function to safely parse JSON fields
   safe_fromJSON <- function(x) {
@@ -205,7 +252,7 @@ render_article_server <- function(output, paper_id, db) {
             type = "scatter", mode = "lines+markers",
             line = list(color = "blue"), marker = list(size = 6)) %>%
       layout(
-        title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
+        title = paste("Stressor Response Chart for", safe_get(paper, "stressor_name")),
         xaxis = list(title = clean_data$article_stressor_label[1]),
         yaxis = list(title = clean_data$scaled_response_label[1])
       )

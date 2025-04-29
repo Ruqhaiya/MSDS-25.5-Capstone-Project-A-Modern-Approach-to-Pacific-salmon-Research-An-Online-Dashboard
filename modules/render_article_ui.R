@@ -7,8 +7,12 @@ render_article_ui <- function(output, session) {
   output$article_content <- renderUI({
     
     tagList(
+      tags$head(
+        includeCSS("www/custom.css")
+      ),
       useShinyjs(),  # Enabling JavaScript for toggling sections
-
+      
+      
       # Back button to return to dashboard
       tags$a(
         href = "?",
@@ -26,29 +30,61 @@ render_article_ui <- function(output, session) {
         
         .arrow-container::before {
           content: '\\2190'; /* Unicode for left arrow */
-          font-size: 24px;
+          font-size: 35px;
           color: #2C3E50;
         }
       ")),
-
+      
+      fluidRow(
+        column(12, align = "center",
+               actionButton("expand_all", "Expand All", class = "btn-sm"),
+               actionButton("collapse_all", "Collapse All", class = "btn-sm")
+        )
+      ),
+      
       # Article Metadata Section 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px;",
-          actionLink("toggle_metadata", strong("Article Metadata ▼")),
-          hidden(div(id = "metadata_section",
-              strong("Species Common Name: "), textOutput("species_name"), br(),
-              strong("Latin Name (Genus species): "), em(textOutput("genus_latin")), br(),
-              strong("Stressor Name: "), textOutput("stressor_name"), br(),
-              strong("Specific Stressor Metric: "), textOutput("specific_stressor_metric"), br(),
-              strong("Stressor Units: "), textOutput("stressor_units"), br(),
-              strong("Vital Rate (Process): "), textOutput("vital_rate"), br(),
-              strong("Life Stage: "), textOutput("life_stage")
-          ))
+          actionLink("toggle_metadata", "Article Metadata ▼", class = "section-title"),
+          hidden(
+            div(id = "metadata_section",
+                style = "font-size:1.1em;",    
+                fluidRow(
+                  column(4, strong("Species Common Name:")),
+                  column(8, textOutput("species_name"))
+                ),
+                fluidRow(
+                  column(4, strong("Latin Name (Genus species):")),
+                  column(8, em(textOutput("genus_latin")))
+                ),
+                fluidRow(
+                  column(4, strong("Stressor Name:")),
+                  column(8, textOutput("stressor_name"))
+                ),
+                fluidRow(
+                  column(4, strong("Specific Stressor Metric:")),
+                  column(8, textOutput("specific_stressor_metric"))
+                ),
+                fluidRow(
+                  column(4, strong("Stressor Units:")),
+                  column(8, textOutput("stressor_units"))
+                ),
+                fluidRow(
+                  column(4, strong("Vital Rate (Process):")),
+                  column(8, textOutput("vital_rate"))
+                ),
+                fluidRow(
+                  column(4, strong("Life Stage:")),
+                  column(8, textOutput("life_stage"))
+                )
+            )
+          )
       ),
 
       # Description & Function Details 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-          actionLink("toggle_description", strong("Description & Function Details ▼")),
+          actionLink("toggle_description", "Description & Function Details ▼", class = "section-title"),
           hidden(div(id = "description_section",
+                     style = "font-size:1.1em;", 
               strong("Detailed SR Function Description"), br(), textOutput("description_overview"), br(), br(),
               strong("Function Derivation"), br(), textOutput("function_derivation")
           ))
@@ -56,38 +92,34 @@ render_article_ui <- function(output, session) {
 
       # Citations Section 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-          actionLink("toggle_citations", strong("Citation(s) ▼")),
-          hidden(div(id = "citations_section", uiOutput("citations")))
+          actionLink("toggle_citations", "Citation(s) ▼", class = "section-title"),
+          hidden(div(id = "citations_section",  style = "font-size:1.1em;",  uiOutput("citations")))
       ),
 
       # Images Section 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-          actionLink("toggle_images", strong("Images ▼")),
-          hidden(div(id = "images_section", uiOutput("article_images")))
+          actionLink("toggle_images", "Images ▼", class = "section-title"),
+          hidden(div(id = "images_section",  style = "font-size:1.1em;", uiOutput("article_images")))
       ),
 
       # CSV Data Table 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-          actionLink("toggle_csv", strong("Stressor Response Data ▼")),
-          hidden(div(id = "csv_section", tableOutput("csv_table")))
+          actionLink("toggle_csv", "Stressor Response Data ▼", class = "section-title"),
+          hidden(div(id = "csv_section",  style = "font-size:1.1em;", tableOutput("csv_table")))
       ),
 
       # Stressor Response Plot 
-      div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-          actionLink("toggle_plot", strong("Stressor Response Chart ▼")),
-          hidden(div(id = "plot_section", plotOutput("stressor_plot")))
-      ),
+      #div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
+         # actionLink("toggle_plot", "Stressor Response Chart ▼", class = "section-title"),
+          #hidden(div(id = "plot_section",  style = "font-size:1.1em;", plotOutput("stressor_plot")))
+    #  ),
       
       # Interactive Plot Section using dygraphs
       # Interactive Plot Section using Plotly
       div(
         style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-        actionLink("toggle_interactive_plot", strong("Interactive Plot ▼")),
-        hidden(div(id = "interactive_plot_section", plotlyOutput("interactive_plot")))
-      
-      
-          
-          
+        actionLink("toggle_interactive_plot", "Interactive Plot ▼", class = "section-title"),
+        hidden(div(id = "interactive_plot_section",  style = "font-size:1.1em;", plotlyOutput("interactive_plot")))
       )
     )
   })
