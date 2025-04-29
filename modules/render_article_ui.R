@@ -118,7 +118,7 @@ render_article_ui <- function(output, session) {
       # Interactive Plot Section using Plotly
       div(
         style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #ffffff; border-radius: 8px;",
-        actionLink("toggle_interactive_plot", "Interactive Plot ▼", class = "section-title"),
+        actionLink("toggle_interactive_plot", "Stressor Response Chart ▼", class = "section-title"),
         hidden(div(id = "interactive_plot_section",  style = "font-size:1.1em;", plotlyOutput("interactive_plot")))
       )
     )
