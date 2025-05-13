@@ -5,16 +5,42 @@ source("global.R")
 source("modules/filters.R", local = TRUE)
 source("modules/pagination.R", local = TRUE)
 source("modules/render_papers.R", local = TRUE)
-source("modules/update_filters.R", local = TRUE)
+source("modules/update_filters_server.R", local = TRUE)
 source("modules/toggle_filters.R", local = TRUE)
 source("modules/reset_filters.R", local = TRUE)
 source("modules/render_article_ui.R", local = TRUE)
 source("modules/render_article_server.R", local = TRUE)
 source("modules/downloads.R", local = TRUE)
 source("modules/upload.R", local = TRUE)
+source("modules/admin_auth.R",    local = TRUE)
+source("modules/manage_categories.R", local = TRUE)
+
 
 server <- function(input, output, session) {
   
+  #-----------------------------------------------------
+  # 1) launch auth module
+  admin_ok <- adminAuthServer("auth", correct_pw = "secret123")
+
+  
+  # 2) Single UI slot for login or category manager
+  output$categories_auth_ui <- renderUI({
+    if (!admin_ok()) {
+      # show the password prompt
+      adminAuthUI("auth")
+    } else {
+      manageCategoriesUI("manage_categories")
+    }
+  })
+  
+  # 3) Wire up the manageCategoriesServer when logged in
+  observeEvent(admin_ok(), {
+    if (admin_ok()) {
+      manageCategoriesServer("manage_categories", db)
+    }
+  })
+  
+  #-----------------------------------------------------
   # Connect to SQLite database
   db <- tryCatch(
     dbConnect(SQLite(), "data/stressor_responses.sqlite"),
@@ -74,13 +100,15 @@ server <- function(input, output, session) {
   output$page_info <- renderText(pagination$page_info())
   
   # Update filters dynamically
-  update_filters_server(input, output, session, data)
+#  update_filters_server(input, output, session, data)
+  update_filters_server(input, output, session, data, db)
+  
   toggle_filters_server(input, session)
   reset_filters_server(input, session)
   
   #calling upload funtion
   upload_server("upload")
-  
+
   # Render articles (paper cards)
   render_papers_server(output, paginated_data, input, session)
   
@@ -153,13 +181,13 @@ server <- function(input, output, session) {
   observe({
     query <- parseQueryString(session$clientData$url_search)
     
-    if (!is.null(query$article_id)) {
-      article_id <- as.numeric(query$article_id)
+    if (!is.null(query$main_id)) {
+      main_id <- as.numeric(query$main_id)
       
-      if (!is.na(article_id)) {
+      if (!is.na(main_id)) {
         tryCatch({
           render_article_ui(output, session)
-          render_article_server(input, output, session, article_id, db)
+          render_article_server(input, output, session, main_id, db)
         }, error = function(e) {
           output$article_content <- renderUI({
             tags$p(

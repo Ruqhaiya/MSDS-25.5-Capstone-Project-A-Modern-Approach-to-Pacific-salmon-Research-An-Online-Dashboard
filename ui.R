@@ -1,9 +1,9 @@
-# nolint start
 
 library(shinyjs)
 library(shiny)
 library(shinyWidgets)
 source("modules/upload.R", local = TRUE)
+source("modules/manage_categories.R", local = TRUE)
 
 ui <- navbarPage(
   id = "main_navbar",
@@ -20,7 +20,7 @@ ui <- navbarPage(
       
       # Dashboard visible only when no article is selected
       conditionalPanel(
-        condition = "!window.location.search.includes('article_id')",
+        condition = "!window.location.search.includes('main_id')",
         
         fluidRow(
           column(8, textInput("search", "Search All Text", placeholder = "Type keywords...")),
@@ -40,24 +40,24 @@ ui <- navbarPage(
           
           fluidRow(
             column(3, pickerInput("stressor", "Stressor Name", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("stressor_metric", "Stressor Metric", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("species", "Species Common Name", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("geography", "Geography (Region)", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE)))
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE)))
           ),
           
           fluidRow(
             column(3, pickerInput("life_stage", "Life Stage", choices = life_stages, multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("activity", "Activity", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("genus_latin", "Genus Latin", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE))),
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
             column(3, pickerInput("species_latin", "Species Latin", choices = list(), multiple = TRUE,
-                                  options = list(`actions-box` = TRUE, `live-search` = TRUE)))
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE)))
           ),
           
           fluidRow(
@@ -117,7 +117,7 @@ ui <- navbarPage(
       
       # Article View
       conditionalPanel(
-        condition = "window.location.search.includes('article_id')",
+        condition = "window.location.search.includes('main_id')",
         fluidRow(
           column(8, offset = 2, uiOutput("article_content"))
         )
@@ -130,6 +130,12 @@ ui <- navbarPage(
     title = "Upload Data",
     value = "upload_data",
     upload_ui("upload")
+  ),
+  
+  tabPanel(
+    title = "Admin",
+    value = "manage_categories",
+    uiOutput("categories_auth_ui")
   )
 )
 
