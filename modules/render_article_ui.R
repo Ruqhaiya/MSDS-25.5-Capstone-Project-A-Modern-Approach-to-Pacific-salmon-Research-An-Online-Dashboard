@@ -35,12 +35,26 @@ render_article_ui <- function(output, session) {
         }
       ")),
       
+      # ===== Article title =====
       fluidRow(
         column(12, align = "center",
-               actionButton("expand_all", "Expand All", class = "btn-sm"),
-               actionButton("collapse_all", "Collapse All", class = "btn-sm")
+               tags$h3(textOutput("article_title"),
+                       style = "margin-top: 20px; margin-bottom: 10px;")
         )
       ),
+      
+      # ===== Expand / Collapse =====
+      fluidRow(
+        column(12, align = "center",
+               actionButton("expand_all",   "Expand All",
+                            class = "btn-sm",
+                            style = "padding: 8px 16px; margin-right: 8px;"),
+               actionButton("collapse_all", "Collapse All",
+                            class = "btn-sm",
+                            style = "padding: 8px 16px;")
+        )
+      ),
+      
       
       # Article Metadata Section 
       div(style = "border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; background-color: #f8f9fa; border-radius: 8px;",

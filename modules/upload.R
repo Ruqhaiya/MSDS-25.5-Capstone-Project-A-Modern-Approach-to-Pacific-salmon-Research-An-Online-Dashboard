@@ -2,6 +2,9 @@
 library(shiny)
 library(DBI)
 library(RSQLite)
+library(base64enc)
+library(shinyjs)
+
 
 # we have server code here but will separate it later. 
 upload_ui <- function(id) {
@@ -67,11 +70,19 @@ upload_ui <- function(id) {
       )
     ),
     tabsetPanel(
-      tabPanel("Citations (as text)", textAreaInput(ns("citation_text"), "Citations (text)", "", width = "100%", height = "100px")),
-      tabPanel("Citations (as links)",
-               textInput(ns("citation_url"), "URL", placeholder = "Enter citation link"),
-               textInput(ns("citation_link_text"), "Link text", placeholder = "Enter display text for the link"))
+      tabPanel(
+        "Citations (as text)",
+        textAreaInput(ns("citation_text"), "Citations (text)", "",
+                      width = "100%", height = "100px")
+      ),
+      tabPanel(
+        "Citations (as links)",
+        textInput(ns("citation_url"),      "URL",       placeholder = "Enter citation link"),
+        textInput(ns("citation_link_text"),"Link text", placeholder = "Enter display text for the link"),
+        uiOutput(ns("preview_citation_link"))
+      )
     ),
+    
     fluidRow(
       column(4, wellPanel(strong("Revision information"), br(), "No revision")),
       column(8, textAreaInput(ns("revision_log"), "Revision log message", "", width = "100%", height = "100px"))
@@ -84,85 +95,162 @@ upload_ui <- function(id) {
 }
 
 # Server: currently writes only existing text fields into stressor_responses
-upload_server <- function(id, db_path = "data/stressor_responses_test.sqlite") {
+upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
   moduleServer(id, function(input, output, session) {
     observeEvent(input$save, {
-      req(input$title)
+      # 1) Basic validation
+      req(input$title, input$sr_csv_file)
+      
+      # 2) Connect to DB
       con <- dbConnect(SQLite(), dbname = db_path)
       on.exit(dbDisconnect(con), add = TRUE)
       
-      # Duplicate check
-      exists_flag <- dbGetQuery(
-        con,
-        "SELECT EXISTS(SELECT 1 FROM stressor_responses WHERE title = ?) AS e;",
-        params = list(input$title)
+      # 3) Duplicate title check
+      exists_flag <- dbGetQuery(con,
+                                "SELECT EXISTS(SELECT 1 FROM stressor_responses WHERE title = ?) AS e;",
+                                params = list(input$title)
       )$e
-      
       if (exists_flag) {
         showNotification("⚠️ That title already exists.", type = "warning")
         return()
       }
       
-      # Insert mapping to DB schema 
-      dbExecute(
-        con,
-        "INSERT INTO stressor_responses (
-          id, title, stressor_name, stressor_units,
-          specific_stressor_metric, species_common_name,
-          species_latin, genus_latin, geography,
-          activity, season, life_stages,
-          citation_link, covariates_dependencies,
-          description_overview, description_function_derivation,
-          description_transferability_of_function, description_source_of_stressor_data1,
-          citations_citation_text, citations_citation_links
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-        params = list(
-          "2000",
-          input$title,
-          input$stressor_name,
-          input$stressor_units,
-          input$specific_stressor_metric,
-          input$species_common_name,
-          input$species_latin,
-          input$genus_latin,
-          input$geography,
-          input$activity,
-          input$season,
-          input$life_stage,
-          paste0(input$citation_link_text, " (", input$citation_url, ")"),
-          input$key_covariates,
-          input$description_overview,
-          input$description_function_derivation,
-          input$description_transferability_of_function,
-          input$description_source_of_stressor_data1,
-          input$citation_text,
-          paste0(input$citation_link_text, " (", input$citation_url, ")")
-        )
+      # 4) Insert into stressor_responses (without csv_data_json or images)
+      dbExecute(con,
+                "INSERT INTO stressor_responses (
+           article_id, title,
+           stressor_name, stressor_units,
+           specific_stressor_metric, species_common_name,
+           species_latin, genus_latin, geography,
+           activity, season, life_stages,
+           citation_link, covariates_dependencies,
+           description_overview, description_function_derivation,
+           description_transferability_of_function,
+           description_source_of_stressor_data1,
+           citations_citation_text, citations_citation_links
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                params = list(
+                  NA,
+                  input$title,
+                  input$stressor_name,
+                  input$stressor_units,
+                  input$specific_stressor_metric,
+                  input$species_common_name,
+                  input$species_latin,
+                  input$genus_latin,
+                  input$geography,
+                  input$activity,
+                  input$season,
+                  input$life_stage,
+                  paste0(input$citation_link_text, " (", input$citation_url, ")"),
+                  input$key_covariates,
+                  input$description_overview,
+                  input$description_function_derivation,
+                  input$description_transferability_of_function,
+                  input$description_source_of_stressor_data1,
+                  input$citation_text,
+                  paste0(input$citation_link_text, " (", input$citation_url, ")")
+                )
       )
       
-      #showNotification("saved!", type = "message")
+      # 5) Grab the new main_id
+      main_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id;")$id[[1]]
+      
+      # 6) Read & reshape the CSV with main_id
+      df_raw <- read.csv(input$sr_csv_file$datapath, stringsAsFactors = FALSE)
+      stressor_label        <- names(df_raw)[1]
+      scaled_response_label <- names(df_raw)[2]
+      names(df_raw)[1:2] <- c("stressor_value", "scaled_response_value")
+      
+      df_json <- df_raw
+      df_json$id                     <- main_id
+      df_json$stressor_label         <- stressor_label
+      df_json$scaled_response_label  <- scaled_response_label
+      df_json$article_stressor_label <- input$stressor_name
+      df_json <- df_json[, c(
+        "id",
+        "stressor_label", "stressor_value",
+        "scaled_response_label", "scaled_response_value",
+        "article_stressor_label",
+        intersect(c("sd", "low_limit", "up_limit"), names(df_json))
+      )]
+      json_data <- jsonlite::toJSON(df_json, dataframe = "rows", auto_unbox = TRUE)
+      
+      # 7) Update the main table with csv_data_json
+      dbExecute(con,
+                "UPDATE stressor_responses
+           SET csv_data_json = ?
+         WHERE main_id = ?;",
+                params = list(json_data, main_id)
+      )
+      
+      # 8) Insert into csv_meta
+      dbExecute(con,
+                "INSERT INTO csv_meta (
+           article_id, main_id,
+           stressor_label, scaled_response_label,
+           article_stressor_label, csv_data_json
+         ) VALUES (?, ?, ?, ?, ?, ?);",
+                params = list(
+                  NA,
+                  main_id,
+                  stressor_label,
+                  scaled_response_label,
+                  input$stressor_name,
+                  json_data
+                )
+      )
+      csv_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id;")$id[[1]]
+      
+      # 9) Insert each row into csv_numeric
+      for (i in seq_len(nrow(df_raw))) {
+        row <- df_raw[i, ]
+        dbExecute(con,
+                  "INSERT INTO csv_numeric (
+             csv_id, row_index,
+             stressor_value, scaled_response_value,
+             sd, low_limit, up_limit
+           ) VALUES (?, ?, ?, ?, ?, ?, ?);",
+                  params = list(
+                    csv_id, i,
+                    row[["stressor_value"]], row[["scaled_response_value"]],
+                    if ("sd"        %in% names(row)) row[["sd"]]        else NA,
+                    if ("low_limit"%in% names(row)) row[["low_limit"]]  else NA,
+                    if ("up_limit"%in% names(row)) row[["up_limit"]]   else NA
+                  )
+        )
+      }
+      
+      # 10) Success message & reset
       showModal(modalDialog(
         title = "✅ Success!",
-        paste("Your entry titled", input$title, "has been successfully saved to the database."),
+        paste0("Your entry titled “", input$title, "” has been saved (ID = ", main_id, ")."),
         easyClose = TRUE,
         footer = modalButton("Close")
       ))
-      
       updateTextInput(session, "title", value = "")
+      reset("sr_csv_file")
     })
     
+    # Sample CSV download remains unchanged
     output$download_sample_csv <- downloadHandler(
-      filename = function() {
-        "demo_sr.csv"
-      },
-      content = function(file) {
-        file.copy("data/demo_sr.csv", file)
-      }
+      filename = function()  "demo_sr.csv",
+      content  = function(file) file.copy("data/demo_sr.csv", file)
     )
     
+    # Citation‐link preview
+    output$preview_citation_link <- renderUI({
+      req(input$citation_url, input$citation_link_text)
+      tags$p(
+        strong("Citation Preview: "),
+        tags$a(input$citation_link_text,
+               href = input$citation_url,
+               target = "_blank",
+               style  = "color: #337ab7; text-decoration: underline;")
+      )
+    })
     
-    # Simple preview
-
+    # Preview logic 
     observeEvent(input$preview, {
       showModal(modalDialog(
         title = "Preview Submission",

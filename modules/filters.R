@@ -1,7 +1,5 @@
 # nolint start
 
-# nolint start
-
 # Function to filter data based on user inputs
 filter_data_server <- function(input, data, session) {
   filtered_data <- reactive({

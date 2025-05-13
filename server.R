@@ -18,7 +18,6 @@ source("modules/manage_categories.R", local = TRUE)
 
 server <- function(input, output, session) {
   
-  #-----------------------------------------------------
   # 1) launch auth module
   admin_ok <- adminAuthServer("auth", correct_pw = "secret123")
 
@@ -40,7 +39,6 @@ server <- function(input, output, session) {
     }
   })
   
-  #-----------------------------------------------------
   # Connect to SQLite database
   db <- tryCatch(
     dbConnect(SQLite(), "data/stressor_responses.sqlite"),
@@ -99,8 +97,7 @@ server <- function(input, output, session) {
   paginated_data <- pagination$paginated_data
   output$page_info <- renderText(pagination$page_info())
   
-  # Update filters dynamically
-#  update_filters_server(input, output, session, data)
+  #update_filters_server(input, output, session, data)
   update_filters_server(input, output, session, data, db)
   
   toggle_filters_server(input, session)

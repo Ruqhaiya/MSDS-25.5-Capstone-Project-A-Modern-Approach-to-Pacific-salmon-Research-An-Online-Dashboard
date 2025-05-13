@@ -5,7 +5,7 @@ account: ruqhaiya
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13963149
-bundleId: 10202676
+bundleId: 10278130
 url: https://ruqhaiya.shinyapps.io/NOAA_SRF_Dashboard/
 version: 1
 asMultiple: FALSE
