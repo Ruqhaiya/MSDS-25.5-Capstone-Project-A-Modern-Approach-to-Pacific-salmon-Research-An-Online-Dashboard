@@ -8,7 +8,7 @@ render_article_ui <- function(output, session) {
     
     tagList(
       tags$head(
-        includeCSS("www/custom.css")
+        #includeCSS("www/custom.css")
       ),
       useShinyjs(),  # Enabling JavaScript for toggling sections
       

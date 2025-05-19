@@ -2,6 +2,8 @@
 
 # Load required modules
 source("global.R")
+source("modules/about_us.R", local = TRUE)             # Restored
+source("modules/acknowledgement.R", local = TRUE)      # Restored
 source("modules/filters.R", local = TRUE)
 source("modules/pagination.R", local = TRUE)
 source("modules/render_papers.R", local = TRUE)
@@ -12,34 +14,29 @@ source("modules/render_article_ui.R", local = TRUE)
 source("modules/render_article_server.R", local = TRUE)
 source("modules/downloads.R", local = TRUE)
 source("modules/upload.R", local = TRUE)
-source("modules/admin_auth.R",    local = TRUE)
+source("modules/admin_auth.R", local = TRUE)
 source("modules/manage_categories.R", local = TRUE)
-
 
 server <- function(input, output, session) {
   
-  # 1) launch auth module
+  # Launch admin authentication
   admin_ok <- adminAuthServer("auth", correct_pw = "secret123")
-
   
-  # 2) Single UI slot for login or category manager
   output$categories_auth_ui <- renderUI({
     if (!admin_ok()) {
-      # show the password prompt
       adminAuthUI("auth")
     } else {
       manageCategoriesUI("manage_categories")
     }
   })
   
-  # 3) Wire up the manageCategoriesServer when logged in
   observeEvent(admin_ok(), {
     if (admin_ok()) {
       manageCategoriesServer("manage_categories", db)
     }
   })
   
-  # Connect to SQLite database
+  # Connect to database
   db <- tryCatch(
     dbConnect(SQLite(), "data/stressor_responses.sqlite"),
     error = function(e) {
@@ -47,15 +44,12 @@ server <- function(input, output, session) {
     }
   )
   
-  # Ensure the `stressor_responses` table exists
   if (!"stressor_responses" %in% dbListTables(db)) {
     stop("Error: Table `stressor_responses` does not exist in the database.")
   }
   
-  # Read the table into a local data frame
   data <- dbReadTable(dbConnect(SQLite(), "data/stressor_responses.sqlite"), "stressor_responses")
   
-  # Filter data based on user input
   filtered_data <- filter_data_server(input, data, session)
   
   progressive_data <- reactive({
@@ -92,105 +86,78 @@ server <- function(input, output, session) {
     df
   })
   
-  # Pagination logic
   pagination <- pagination_server(input, filtered_data)
   paginated_data <- pagination$paginated_data
   output$page_info <- renderText(pagination$page_info())
   
-  #update_filters_server(input, output, session, data)
   update_filters_server(input, output, session, data, db)
-  
   toggle_filters_server(input, session)
   reset_filters_server(input, session)
   
-  #calling upload funtion
   upload_server("upload")
-
-  # Render articles (paper cards)
+  
   render_papers_server(output, paginated_data, input, session)
   
-  
-  # Download feature
   download_json(output, filtered_data, input, session)
   download_csv(output, filtered_data, input, session)
   
-  # Download All JSON
+  # Modals for download options
   observeEvent(input$trigger_json_all, {
     showModal(modalDialog(
       title = span(icon("file-code"), "Download All - JSON"),
-      div(
-        style = "text-align: center; padding: 20px;",
-        downloadButton("download_all_json", "Click to Download JSON", class = "btn btn-primary btn-lg")
-      ),
+      div(style = "text-align: center; padding: 20px;",
+          downloadButton("download_all_json", "Click to Download JSON", class = "btn btn-primary btn-lg")),
       footer = modalButton("Close"),
-      size = "m",
-      easyClose = TRUE
+      size = "m", easyClose = TRUE
     ))
   })
   observeEvent(input$download_all_json, { removeModal() })
   
-  # Download All CSV
   observeEvent(input$trigger_csv_all, {
     showModal(modalDialog(
       title = span(icon("file-csv"), "Download All - CSV"),
-      div(
-        style = "text-align: center; padding: 20px;",
-        downloadButton("download_all_csv", "Click to Download CSV", class = "btn btn-success btn-lg")
-      ),
+      div(style = "text-align: center; padding: 20px;",
+          downloadButton("download_all_csv", "Click to Download CSV", class = "btn btn-success btn-lg")),
       footer = modalButton("Close"),
-      size = "m",
-      easyClose = TRUE
+      size = "m", easyClose = TRUE
     ))
   })
   observeEvent(input$download_all_csv, { removeModal() })
   
-  # Download Selected JSON
   observeEvent(input$trigger_json_selected, {
     showModal(modalDialog(
       title = span(icon("file-code"), "Download Selected - JSON"),
-      div(
-        style = "text-align: center; padding: 20px;",
-        downloadButton("download_selected_json", "Click to Download JSON", class = "btn btn-primary btn-lg")
-      ),
+      div(style = "text-align: center; padding: 20px;",
+          downloadButton("download_selected_json", "Click to Download JSON", class = "btn btn-primary btn-lg")),
       footer = modalButton("Close"),
-      size = "m",
-      easyClose = TRUE
+      size = "m", easyClose = TRUE
     ))
   })
   observeEvent(input$download_selected_json, { removeModal() })
   
-  # Download Selected CSV
   observeEvent(input$trigger_csv_selected, {
     showModal(modalDialog(
       title = span(icon("file-csv"), "Download Selected - CSV"),
-      div(
-        style = "text-align: center; padding: 20px;",
-        downloadButton("download_selected_csv", "Click to Download CSV", class = "btn btn-success btn-lg")
-      ),
+      div(style = "text-align: center; padding: 20px;",
+          downloadButton("download_selected_csv", "Click to Download CSV", class = "btn btn-success btn-lg")),
       footer = modalButton("Close"),
-      size = "m",
-      easyClose = TRUE
+      size = "m", easyClose = TRUE
     ))
   })
-  # Handle article display logic
-  
   observeEvent(input$download_selected_csv, { removeModal() })
+  
+  # Article display logic
   observe({
     query <- parseQueryString(session$clientData$url_search)
-    
     if (!is.null(query$main_id)) {
       main_id <- as.numeric(query$main_id)
-      
       if (!is.na(main_id)) {
         tryCatch({
           render_article_ui(output, session)
           render_article_server(input, output, session, main_id, db)
         }, error = function(e) {
           output$article_content <- renderUI({
-            tags$p(
-              paste("Error rendering article:", e$message),
-              style = "color: red; font-weight: bold;"
-            )
+            tags$p(paste("Error rendering article:", e$message), style = "color: red; font-weight: bold;")
           })
           print(e)
         })
@@ -202,7 +169,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # Toggle sections logic
+  # Section toggles
   observeEvent(input$toggle_metadata, { toggle("metadata_section") })
   observeEvent(input$toggle_description, { toggle("description_section") })
   observeEvent(input$toggle_citations, { toggle("citations_section") })
@@ -215,13 +182,10 @@ server <- function(input, output, session) {
   observeEvent(input$prev_page, { updateNumericInput(session, "page", value = max(1, input$page - 1)) })
   observeEvent(input$next_page, { updateNumericInput(session, "page", value = input$page + 1) })
   
-  # Close the database connection when the session ends
+  # Close DB connection on session end
   session$onSessionEnded(function() {
     dbDisconnect(db)
   })
-  
-  
-
 }
 
 # nolint end
