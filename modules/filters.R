@@ -3,24 +3,11 @@
 # Function to filter data based on user inputs
 filter_data_server <- function(input, data, session) {
   filtered_data <- reactive({
-    
-    # Ensure data is loaded and has rows before filtering
+
     req(!is.null(data), nrow(data) > 0)
-    
-    data_filtered <- data # starting with the full dataset
-    
+    data_filtered <- data
+
     # Applying filtering conditions for each selected filter
-    
-    # Filter: stressor name
-    if (!is.null(input$stressor) && length(input$stressor) > 0) {
-      data_filtered <- data_filtered[data_filtered$stressor_name %in% input$stressor, ]
-    }
-    
-    # Filter: stressor metric
-    if (!is.null(input$stressor_metric) && length(input$stressor_metric) > 0) {
-      data_filtered <- data_filtered[data_filtered$specific_stressor_metric %in% input$stressor_metric, ]
-    }
-    
     # Filter: species common name
     if (!is.null(input$species) && length(input$species) > 0) {
       data_filtered <- data_filtered[data_filtered$species_common_name %in% input$species, ]
@@ -34,7 +21,7 @@ filter_data_server <- function(input, data, session) {
     # Filter: life stage
     if (!is.null(input$life_stage) && length(input$life_stage) > 0) {
       data_filtered <- data_filtered[
-        Reduce(`|`, lapply(input$life_stage, function(stage) {
+        Reduce('|', lapply(input$life_stage, function(stage) {
           grepl(stage, data_filtered$life_stages, ignore.case = TRUE)
         })),
       ]
@@ -54,14 +41,33 @@ filter_data_server <- function(input, data, session) {
     if (!is.null(input$species_latin) && length(input$species_latin) > 0) {
       data_filtered <- data_filtered[data_filtered$species_latin %in% input$species_latin, ]
     }
-    
-    # Search logic across multiple fields
+
+     if (!is.null(input$research_article_type) && length(input$research_article_type) > 0) {
+      data_filtered <- data_filtered[data_filtered$research_article_type %in% input$research_article_type, ]
+    }
+    if (!is.null(input$location_country) && length(input$location_country) > 0) {
+      data_filtered <- data_filtered[data_filtered$location_country %in% input$location_country, ]
+    }
+    if (!is.null(input$location_state_province) && length(input$location_state_province) > 0) {
+      data_filtered <- data_filtered[data_filtered$location_state_province %in% input$location_state_province, ]
+    }
+    if (!is.null(input$location_watershed_lab) && length(input$location_watershed_lab) > 0) {
+      data_filtered <- data_filtered[data_filtered$location_watershed_lab %in% input$location_watershed_lab, ]
+    }
+    if (!is.null(input$location_river_creek) && length(input$location_river_creek) > 0) {
+      data_filtered <- data_filtered[data_filtered$location_river_creek %in% input$location_river_creek, ]
+    }
+    if (!is.null(input$broad_stressor_name) && length(input$broad_stressor_name) > 0) {
+      data_filtered <- data_filtered[data_filtered$broad_stressor_name %in% input$broad_stressor_name, ]
+    }
+
+    # Search
     if (!is.null(input$search) && input$search != "") {
       search_term <- tolower(input$search)
       search_cols <- c("title", "species_common_name", "genus_latin", "species_latin",
                        "stressor_name", "specific_stressor_metric", "life_stages",
                        "activity", "geography")
-      
+
       if (nrow(data_filtered) > 0 && length(search_cols) > 0) {
         matched_rows <- Reduce(`|`, lapply(search_cols, function(col) {
           grepl(search_term, tolower(data_filtered[[col]]), ignore.case = TRUE)
@@ -69,14 +75,9 @@ filter_data_server <- function(input, data, session) {
         data_filtered <- data_filtered[matched_rows, ]
       }
     }
-    
+
     data_filtered
-    
-    
   })
-  
+
   return(filtered_data)
 }
-
-# nolint end
-

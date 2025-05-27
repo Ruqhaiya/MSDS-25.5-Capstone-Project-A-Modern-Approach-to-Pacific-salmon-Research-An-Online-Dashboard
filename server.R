@@ -48,7 +48,7 @@ server <- function(input, output, session) {
     stop("Error: Table `stressor_responses` does not exist in the database.")
   }
   
-  data <- dbReadTable(dbConnect(SQLite(), "data/stressor_responses.sqlite"), "stressor_responses")
+  data <- dbReadTable(db, "stressor_responses")
   
   filtered_data <- filter_data_server(input, data, session)
   

@@ -1,3 +1,4 @@
+# nolint start
 library(shinyjs)
 library(shiny)
 library(shinyWidgets)
@@ -184,6 +185,22 @@ ui <- navbarPage(
                                   options = list('actions-box' = TRUE, 'live-search' = TRUE)))
           ),
           fluidRow(
+            column(3, pickerInput("research_article_type", "Research Article Type", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
+            column(3, pickerInput("location_country", "Country", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
+            column(3, pickerInput("location_state_province", "State / Province", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
+            column(3, pickerInput("location_watershed_lab", "Watershed / Lab", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE)))
+          ),
+          fluidRow(
+            column(3, pickerInput("location_river_creek", "River / Creek", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE))),
+            column(3, pickerInput("broad_stressor_name", "Broad Stressor Name", choices = list(), multiple = TRUE,
+                                  options = list('actions-box' = TRUE, 'live-search' = TRUE)))
+          ),
+          fluidRow(
             column(12, div(style = "text-align: right;",
                            actionLink("reset_filters", "Reset Filters",
                                       style = "color: #0073e6; font-size: 14px; text-decoration: none; margin-right: 10px;")))
@@ -249,3 +266,4 @@ ui <- navbarPage(
     uiOutput("categories_auth_ui")
   )
 )
+# nolint end
