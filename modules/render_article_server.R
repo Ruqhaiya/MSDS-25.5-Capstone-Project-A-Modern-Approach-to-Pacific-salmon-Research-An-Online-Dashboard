@@ -157,7 +157,17 @@ render_article_server <- function(input, output, session, paper_id, db) {
   
   # Render images
   output$article_images <- renderUI({
-    image_url <- if (is.data.frame(paper$images)) as.character(paper$images$image_url) else paper$images
+    cat("\n image raw:\n")
+    print(paper$images)
+
+    image_url <- NULL
+
+    if (is.list(paper$images) && !is.null(paper$images$image_url)) {
+      image_url <- paper$images$image_url
+    } else if (is.character(paper$images) && nzchar(paper$images)) {
+      image_url <- paper$images
+    }
+
     if (!is.null(image_url) && nzchar(image_url)) {
       tags$figure(
         tags$img(src = image_url, width = "60%", alt = "Article Image"),
@@ -165,90 +175,85 @@ render_article_server <- function(input, output, session, paper_id, db) {
       )
     } else {
       tags$p("No images available.")
-    }
-  })
-  
-  # Fetch stressor response data from csv_numeric + csv_meta
-  stressor_data <- dbGetQuery(db,
-                              "SELECT n.*, m.article_stressor_label, m.scaled_response_label
-     FROM csv_numeric n
-     JOIN csv_meta    m ON n.csv_id = m.csv_id
-    WHERE m.main_id = ?",
-                              params = list(paper_id)
-  )  
+  }
+})
 
   
-  # Get x_label and y_label
-  x_label <- ifelse("article_stressor_label" %in% names(stressor_data) && nzchar(stressor_data$article_stressor_label[1]), stressor_data$article_stressor_label[1], "Stressor")
-  y_label <- ifelse("scaled_response_label" %in% names(stressor_data) && nzchar(stressor_data$scaled_response_label[1]), stressor_data$scaled_response_label[1], "Response")
-  
-  # Render stressor response table
+  # # Fetch stressor response data from csv_numeric + csv_meta
+  # stressor_data <- dbGetQuery(db,
+  #                             "SELECT n.*, m.article_stressor_label, m.scaled_response_label
+  #    FROM csv_numeric n
+  #    JOIN csv_meta    m ON n.csv_id = m.csv_id
+  #   WHERE m.main_id = ?",
+  #                             params = list(paper_id)
+  # )  
+
+  # Parse stressor response data directly from JSON column
+  csv_data <- safe_fromJSON(paper$csv_data_json)
+  if (!is.null(csv_data)) {
+    df <- as.data.frame(csv_data, stringsAsFactors = FALSE)
+    names(df) <- make.names(names(df))  # Make names syntactically valid
+    df[] <- lapply(df, function(x) suppressWarnings(as.numeric(x)))
+    df <- df[complete.cases(df), ]
+    df <- df[order(df[[1]]), ]  # Sort by X
+  } else {
+    df <- data.frame()
+  }
+
+  # Table
   output$csv_table <- renderTable({
-    if (nrow(stressor_data) == 0) {
-      return(data.frame(Message = "No data available for this article"))
-    }
-    
-    display_cols <- c("stressor_value", "scaled_response_value", "sd", "low_limit", "up_limit")
-    display_df <- stressor_data[, intersect(display_cols, names(stressor_data)), drop = FALSE]
-    
-    for (col in c("sd", "low_limit", "up_limit")) {
-      if (col %in% names(display_df)) {
-        display_df[[col]] <- smart_round(display_df[[col]])
-      }
-    }
-    
-    names(display_df)[names(display_df) == "stressor_value"] <- x_label
-    names(display_df)[names(display_df) == "scaled_response_value"] <- y_label
-    
-    display_df
-  })
-  
-  # Static plot
+  if (nrow(df) == 0) return(data.frame(Message = "No data available for this article"))
+
+  colnames(df) <- gsub("\\.", " ", colnames(df))  # Replace dots with spaces
+  colnames(df)[1] <- safe_get(paper, "stressor_name")
+  df
+})
+
+
+  # Static Plot
   output$stressor_plot <- renderPlot({
-    if (nrow(stressor_data) == 0) {
-      plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
-      text(1, 1, "No data available for this article", col = "black", cex = 1.5, font = 2)
-      return()
-    }
-    
-    clean_data <- stressor_data[complete.cases(stressor_data[, c("stressor_value", "scaled_response_value")]), ]
-    
-    plot(
-      clean_data$stressor_value, clean_data$scaled_response_value,
-      type = "o", col = "blue", pch = 16, lwd = 2,
-      xlab = x_label,
-      ylab = y_label,
-      main = paste("Stressor Response for", safe_get(paper, "stressor_name"))
-    )
-  })
-  
-  # Interactive plot
+  if (nrow(df) == 0) {
+    plot(1, type = "n", axes = FALSE, xlab = "", ylab = "")
+    text(1, 1, "No data available for this article", col = "black", cex = 1.5, font = 2)
+    return()
+  }
+
+  plot(
+    df[[1]], df[[2]],
+    type = "o", col = "blue", pch = 16, lwd = 2,
+    xlab = safe_get(paper, "stressor_name"),
+    ylab = gsub("\\.", " ", names(df)[2]),
+    main = paste("Stressor Response for", safe_get(paper, "stressor_name"))
+  )
+})
+
+
+  # Interactive Plot
   output$interactive_plot <- renderPlotly({
-    clean_data <- stressor_data[complete.cases(stressor_data[, c("stressor_value", "scaled_response_value")]), ]
-    
-    if (nrow(clean_data) == 0) {
-      return(plot_ly(type = "scatter", mode = "markers", height = 200) %>%
-               layout(
-                 margin = list(t = 20, b = 20),
-                 xaxis = list(visible = FALSE), yaxis = list(visible = FALSE),
-                 annotations = list(list(
-                   text = "No data available for this article",
-                   xref = "paper", yref = "paper",
-                   x = 0.5, y = 0.5, showarrow = FALSE,
-                   font = list(size = 16, color = "black")
-                 ))
+  if (nrow(df) == 0) {
+    return(plot_ly(type = "scatter", mode = "markers", height = 200) %>%
+             layout(
+               margin = list(t = 20, b = 20),
+               xaxis = list(visible = FALSE), yaxis = list(visible = FALSE),
+               annotations = list(list(
+                 text = "No data available for this article",
+                 xref = "paper", yref = "paper",
+                 x = 0.5, y = 0.5, showarrow = FALSE,
+                 font = list(size = 16, color = "black")
                ))
-    }
-    
-    plot_ly(clean_data, x = ~stressor_value, y = ~scaled_response_value,
-            type = "scatter", mode = "lines+markers",
-            line = list(color = "blue"), marker = list(size = 6)) %>%
-      layout(
-        title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
-        xaxis = list(title = x_label),
-        yaxis = list(title = y_label)
-      )
-  })
+             ))
+  }
+
+  plot_ly(df, x = ~df[[1]], y = ~df[[2]],
+          type = "scatter", mode = "lines+markers",
+          line = list(color = "blue"), marker = list(size = 6)) %>%
+    layout(
+      title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
+      xaxis = list(title = safe_get(paper, "stressor_name")),
+      yaxis = list(title = gsub("\\.", " ", names(df)[2]))
+    )
+})
+
 }
 
 # nolint end

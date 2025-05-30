@@ -1,3 +1,5 @@
+# nolint start
+
 library(shiny)
 library(DBI)
 library(shinyWidgets)
@@ -74,10 +76,10 @@ manageCategoriesUI <- function(id) {
 }
 
 # Server function for Manage Categories module
-manageCategoriesServer <- function(id, db) {
+manageCategoriesServer <- function(id, db, onUpdate = NULL) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    
+
     #
     # 1) —— ADD CATEGORY —— 
     #
@@ -92,23 +94,22 @@ manageCategoriesServer <- function(id, db) {
         )
         showNotification(sprintf("✅ Added \"%s\"", name), type = "message")
         updateTextInput(session, "new_cat_name", value = "")
+        if (!is.null(onUpdate)) onUpdate(runif(1))  # signal lookup update
       }, error = function(e) {
         showNotification(e$message, type = "error")
       })
     })
-    
+
     #
     # 2) —— DELETE CATEGORY —— 
     #
-    # 2a) repopulate picker when category‐type changes
     observeEvent(input$del_cat_type, {
       names <- dbGetQuery(db,
                           sprintf("SELECT name FROM %s ORDER BY name", input$del_cat_type)
       )$name
       updatePickerInput(session, "del_cat_items", choices = names, selected = NULL)
     }, ignoreInit = TRUE)
-    
-    # 2b) perform deletes
+
     observeEvent(input$del_cat_btn, {
       req(input$del_cat_type, input$del_cat_items)
       tbl       <- input$del_cat_type
@@ -121,32 +122,40 @@ manageCategoriesServer <- function(id, db) {
           sprintf("🗑 Deleted %d from %s", length(to_delete), tbl),
           type = "warning"
         )
-        # refresh list
         updatePickerInput(session, "del_cat_items", choices = character(0))
+        if (!is.null(onUpdate)) onUpdate(runif(1))  # signal lookup update
       }, error = function(e) {
         showNotification(e$message, type = "error")
       })
     })
-    
+
     #
     # 3) —— SEARCH ARTICLES —— 
     #
     observeEvent(input$search_article, {
       query  <- "SELECT main_id, title FROM stressor_responses WHERE 1=1"
       params <- list()
+
       if (!is.na(input$del_article_id)) {
-        query    <- paste0(query, " AND main_id = ?")
-        params[] <- list(input$del_article_id)
+        query <- paste0(query, " AND main_id = ?")
+        params <- c(params, input$del_article_id)
       }
+
       if (nzchar(input$del_article_title)) {
-        query    <- paste0(query, " AND title LIKE ?")
-        params[] <- list(paste0("%", input$del_article_title, "%"))
+        query <- paste0(query, " AND title LIKE ?")
+        params <- c(params, paste0("%", input$del_article_title, "%"))
       }
+
       df <- dbGetQuery(db, query, params = params)
-      choices <- setNames(df$main_id, paste0(df$main_id, ": ", df$title))
-      updatePickerInput(session, "del_article_sel", choices = choices, selected = NULL)
+      if (nrow(df) == 0) {
+        showNotification("No matching articles found.", type = "warning")
+        updatePickerInput(session, "del_article_sel", choices = NULL)
+      } else {
+        choices <- setNames(df$main_id, paste0(df$main_id, ": ", df$title))
+        updatePickerInput(session, "del_article_sel", choices = choices, selected = NULL)
+      }
     })
-    
+
     #
     # 4) —— DELETE ARTICLE —— 
     #
@@ -154,36 +163,29 @@ manageCategoriesServer <- function(id, db) {
       req(input$del_article_sel)
       mid <- input$del_article_sel
       tryCatch({
-        dbWithTransaction(db, {
-          # a) find csv_ids
-          csv_ids <- dbGetQuery(db,
-                                "SELECT csv_id FROM csv_meta WHERE main_id = ?",
-                                params = list(mid)
-          )$csv_id
-          # b) delete numeric
-          if (length(csv_ids)) {
-            dbExecute(db,
-                      sprintf("DELETE FROM csv_numeric WHERE csv_id IN (%s)", 
-                              paste(rep("?", length(csv_ids)), collapse = ",")),
-                      params = as.list(csv_ids)
-            )
-          }
-          # c) delete meta
-          dbExecute(db,
-                    "DELETE FROM csv_meta WHERE main_id = ?",
-                    params = list(mid)
-          )
-          # d) delete main
-          dbExecute(db,
-                    "DELETE FROM stressor_responses WHERE main_id = ?",
-                    params = list(mid)
-          )
-        })
+        dbExecute(db,
+                  "DELETE FROM stressor_responses WHERE main_id = ?",
+                  params = list(mid)
+        )
         showNotification(paste0("🗑 Article ", mid, " deleted"), type = "message")
         updatePickerInput(session, "del_article_sel", choices = NULL)
+        if (!is.null(onUpdate)) onUpdate(runif(1))  # optional: signal refresh
       }, error = function(e) {
         showNotification(e$message, type = "error")
       })
     })
+
+    observeEvent(input$main_navbar, {
+      if (input$main_navbar == "manage_categories") {
+        tbl <- input$del_cat_type
+        if (!is.null(tbl)) {
+          names <- dbGetQuery(db, sprintf("SELECT name FROM %s ORDER BY name", tbl))$name
+          updatePickerInput(session, "del_cat_items", choices = names, selected = NULL)
+        }
+      }
+    }, ignoreInit = TRUE)
+
   })
+
 }
+# nolint end 
