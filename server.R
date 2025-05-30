@@ -16,9 +16,43 @@ source("modules/downloads.R", local = TRUE)
 source("modules/upload.R", local = TRUE)
 source("modules/admin_auth.R", local = TRUE)
 source("modules/manage_categories.R", local = TRUE)
+source("modules/eda.R", local = TRUE)
+
 
 server <- function(input, output, session) {
-  
+
+  observeEvent(input$main_navbar, {
+    if (input$main_navbar == "dashboard") {
+      updateFilterDropdowns()
+    }
+  }, ignoreInit = TRUE)
+
+  updateFilterDropdowns <- function() {
+  updatePickerInput(session, "stressor", choices = getCategoryChoices("stressor_names"))
+  updatePickerInput(session, "stressor_metric", choices = getCategoryChoices("stressor_metrics"))
+  updatePickerInput(session, "species", choices = getCategoryChoices("species_common_names"))
+  updatePickerInput(session, "geography", choices = getCategoryChoices("geographies"))
+  updatePickerInput(session, "life_stage", choices = getCategoryChoices("life_stages"))
+  updatePickerInput(session, "activity", choices = getCategoryChoices("activities"))
+  updatePickerInput(session, "genus_latin", choices = getCategoryChoices("genus_latins"))
+  updatePickerInput(session, "species_latin", choices = getCategoryChoices("species_latins"))
+  updatePickerInput(session, "research_article_type", choices = getCategoryChoices("research_article_types"))
+  updatePickerInput(session, "location_country", choices = getCategoryChoices("location_countries"))
+  updatePickerInput(session, "location_state_province", choices = getCategoryChoices("location_state_provinces"))
+  updatePickerInput(session, "location_watershed_lab", choices = getCategoryChoices("location_watershed_labs"))
+  updatePickerInput(session, "location_river_creek", choices = getCategoryChoices("location_river_creeks"))
+  updatePickerInput(session, "broad_stressor_name", choices = getCategoryChoices("broad_stressor_names"))
+  }
+
+  getCategoryChoices <- function(table_name) {
+  tryCatch({
+    dbGetQuery(db, sprintf("SELECT name FROM %s ORDER BY name", table_name))$name
+  }, error = function(e) {
+    character(0)
+  })
+}
+
+
   # Launch admin authentication
   admin_ok <- adminAuthServer("auth", correct_pw = "secret123")
   
@@ -95,6 +129,8 @@ server <- function(input, output, session) {
   reset_filters_server(input, session)
   
   upload_server("upload")
+
+  edaServer("eda", db_path = "data/stressor_responses.sqlite")
   
   render_papers_server(output, paginated_data, input, session)
   
