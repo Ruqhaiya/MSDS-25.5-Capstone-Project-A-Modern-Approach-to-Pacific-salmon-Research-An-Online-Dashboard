@@ -271,6 +271,10 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
         "Your stressor response profile has been saved.",
         easyClose = TRUE
       ))
+
+       # Get the ID of the newly inserted row
+      main_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id
+
     })
 
     observeEvent(input$preview, {
