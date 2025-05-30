@@ -256,11 +256,97 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
 
       # Step 3: Success modal
       showModal(modalDialog(
-        title = "✅ Success!",
+        title = "Success!",
         "Your stressor response profile has been saved.",
         easyClose = TRUE
       ))
     })
+
+    observeEvent(input$preview, {
+      req(input$title)
+
+      # Read uploaded CSV and show head
+      csv_preview <- NULL
+      if (!is.null(input$sr_csv_file)) {
+        try({
+          df_csv <- read.csv(input$sr_csv_file$datapath, stringsAsFactors = FALSE)
+          csv_preview <- paste(capture.output(head(df_csv, 5)), collapse = "\n")
+        }, silent = TRUE)
+      }
+
+      # Show preview modal with all fields
+      showModal(modalDialog(
+        title = "Preview Your Submission",
+        size = "l",
+        tagList(
+          h4("Title:"), verbatimTextOutput(ns("preview_title")),
+          h4("Stressor Name:"), verbatimTextOutput(ns("preview_stressor")),
+          h4("Specific Stressor Metric:"), verbatimTextOutput(ns("preview_metric")),
+          h4("Stressor Units:"), verbatimTextOutput(ns("preview_units")),
+          h4("Species (Common):"), verbatimTextOutput(ns("preview_species")),
+          h4("Genus (Latin):"), verbatimTextOutput(ns("preview_genus")),
+          h4("Species (Latin):"), verbatimTextOutput(ns("preview_species_latin")),
+          h4("Geography:"), verbatimTextOutput(ns("preview_geography")),
+          h4("Life Stages:"), verbatimTextOutput(ns("preview_lifestage")),
+          h4("Activity:"), verbatimTextOutput(ns("preview_activity")),
+          h4("Article Type:"), verbatimTextOutput(ns("preview_article")),
+          h4("Location - Country:"), verbatimTextOutput(ns("preview_country")),
+          h4("Location - State/Province:"), verbatimTextOutput(ns("preview_state")),
+          h4("Watershed / Lab:"), verbatimTextOutput(ns("preview_watershed")),
+          h4("River / Creek:"), verbatimTextOutput(ns("preview_river")),
+          h4("Broad Stressor Name:"), verbatimTextOutput(ns("preview_broad_stressor")),
+          h4("Description (Overview):"), verbatimTextOutput(ns("preview_overview")),
+          h4("Description (Derivation):"), verbatimTextOutput(ns("preview_derivation")),
+          h4("Description (Transferability):"), verbatimTextOutput(ns("preview_transferability")),
+          h4("Description (Data Source):"), verbatimTextOutput(ns("preview_datasource")),
+          h4("Vital Rate:"), verbatimTextOutput(ns("preview_vital")),
+          h4("Season:"), verbatimTextOutput(ns("preview_season")),
+          h4("Activity Details:"), verbatimTextOutput(ns("preview_activity_details")),
+          h4("Stressor Magnitude:"), verbatimTextOutput(ns("preview_magnitude")),
+          h4("POE Chain:"), verbatimTextOutput(ns("preview_poe")),
+          h4("Covariates / Dependencies:"), verbatimTextOutput(ns("preview_covariates")),
+          h4("Citation Text:"), verbatimTextOutput(ns("preview_citation_text")),
+          h4("Citation Link:"), verbatimTextOutput(ns("preview_citation_link")),
+          h4("Revision Log:"), verbatimTextOutput(ns("preview_revision_log")),
+          h4("Uploaded CSV Preview (first 5 rows):"),
+          tags$pre(csv_preview %||% "No CSV uploaded or preview failed.")
+        ),
+        easyClose = TRUE,
+        footer = modalButton("Close")
+      ))
+
+      # Populate text outputs
+      output$preview_title <- renderText({ input$title })
+      output$preview_stressor <- renderText({ paste(input$stressor_name, collapse = ", ") })
+      output$preview_metric <- renderText({ paste(input$specific_stressor_metric, collapse = ", ") })
+      output$preview_units <- renderText({ input$stressor_units })
+      output$preview_species <- renderText({ paste(input$species_common_name, collapse = ", ") })
+      output$preview_genus <- renderText({ paste(input$genus_latin, collapse = ", ") })
+      output$preview_species_latin <- renderText({ paste(input$species_latin, collapse = ", ") })
+      output$preview_geography <- renderText({ paste(input$geography, collapse = ", ") })
+      output$preview_lifestage <- renderText({ paste(input$life_stage, collapse = ", ") })
+      output$preview_activity <- renderText({ paste(input$activity, collapse = ", ") })
+      output$preview_article <- renderText({ paste(input$research_article_type, collapse = ", ") })
+      output$preview_country <- renderText({ paste(input$location_country, collapse = ", ") })
+      output$preview_state <- renderText({ paste(input$location_state_province, collapse = ", ") })
+      output$preview_watershed <- renderText({ paste(input$location_watershed_lab, collapse = ", ") })
+      output$preview_river <- renderText({ paste(input$location_river_creek, collapse = ", ") })
+      output$preview_broad_stressor <- renderText({ paste(input$broad_stressor_name, collapse = ", ") })
+      output$preview_overview <- renderText({ input$description_overview })
+      output$preview_derivation <- renderText({ input$description_function_derivation })
+      output$preview_transferability <- renderText({ input$description_transferability_of_function })
+      output$preview_datasource <- renderText({ input$description_source_of_stressor_data1 })
+      output$preview_vital <- renderText({ input$vital_rate })
+      output$preview_season <- renderText({ input$season })
+      output$preview_activity_details <- renderText({ input$activity_details })
+      output$preview_magnitude <- renderText({ input$stressor_magnitude })
+      output$preview_poe <- renderText({ input$poe_chain })
+      output$preview_covariates <- renderText({ input$key_covariates })
+      output$preview_citation_text <- renderText({ input$citation_text })
+      output$preview_citation_link <- renderText({ paste0(input$citation_link_text, " (", input$citation_url, ")") })
+      output$preview_revision_log <- renderText({ input$revision_log })
+    })
+
   })
 }
 
