@@ -2,6 +2,14 @@ render_papers_server <- function(output, paginated_data, input, session) {
   output$paper_cards <- renderUI({
     data_to_display <- paginated_data()
     
+    format_field <- function(val, bold = FALSE) {
+      display <- ifelse(is.na(val) || val == "NA", "", val)
+      style <- if (bold) "metadata-bold" else "metadata-light"
+      title_attr <- if (nzchar(display)) paste0("title='", htmltools::htmlEscape(display), "'") else ""
+      sprintf("<div class='paper-meta-item %s' %s>%s</div>", style, title_attr, htmltools::htmlEscape(display))
+    }
+
+
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(tags$p(
         "No research papers found.",
@@ -19,55 +27,51 @@ render_papers_server <- function(output, paginated_data, input, session) {
         article_url <- paste0("?main_id=", paper$main_id)
         checkbox_id <- paste0("select_article_", paper$main_id)
         
-        div(
-          class = "hover-highlight",
-          style = "padding: 15px; margin: 10px auto;
-                   border-radius: 8px; width: 90%; height: auto;
-                   display: flex; flex-direction: column; align-items: center;",
-          
-          div(
-            style = "border: 1px solid #ddd; padding: 15px; background-color: #fff;
-                     border-radius: 8px; width: 100%;
-                     display: flex; flex-direction: column; align-items: center;",
-            
-            # Checkbox
-            div(
-              style = "display: flex; align-items: center; width: 100%;",
-              checkboxInput(inputId = checkbox_id, label = NULL, value = FALSE)
-            ),
-            
-            # Title link
+      div(
+        class = "hover-highlight",
+        style = "padding: 8px 12px; margin: 6px auto; border-radius: 6px; width: 95%;
+                display: flex; align-items: flex-start; justify-content: flex-start;
+                border: 1px solid #ddd; background-color: #f9f9f9; min-height: 80px;",
+
+        # Checkbox
+        div(style = "margin-right: 10px; margin-top: 5px;",
+            checkboxInput(inputId = checkbox_id, label = NULL, value = FALSE, width = "20px")
+        ),
+
+        # Title + Metadata block
+        div(style = "flex-grow: 1; padding-left: 10px;",
+
+            # Title
             tags$a(
               href = article_url,
               target = "_self",
-              paste0(paper$main_id, ". ", paper$title),
-              style = "margin-bottom: 10px; text-align: left;
-                       color: #6082B6; font-weight: bold; cursor: pointer;"
+              class = "paper-card-title",
+              paste0(paper$main_id, ". ", paper$title)
             ),
-            
-            # Metadata
-            div(
-              style = "display: flex; width: 100%;",
-              div(
-                style = "flex: 1; padding-right: 10px;",
-                tags$p("Species Common Name: ", tags$strong(paper$species_common_name)),
-                tags$p("Stressor Name: ", tags$strong(paper$stressor_name)),
-                tags$p("Specific Stressor Metric: ", tags$strong(paper$specific_stressor_metric)),
-                tags$p("Stressor Units: ", tags$strong(
-                  ifelse(is.null(paper$stressor_units) || paper$stressor_units == "", "(see notes)", paper$stressor_units)
-                ))
-              ),
-              div(
-                style = "flex: 1; padding-left: 10px;",
-                tags$p("Genus Latin: ", tags$strong(paper$genus_latin)),
-                tags$p("Species Latin: ", tags$strong(paper$species_latin)),
-                tags$p("Life Stage: ", tags$strong(paper$life_stages)),
-                tags$p("Activity: ", tags$strong(paper$activity)),
-                tags$p("Geography: ", tags$strong(paper$geography))
-              )
+
+            # Metadata rows
+            div(class = "paper-meta-row",
+              HTML(format_field(paper$species_common_name, TRUE)),
+              HTML(format_field(paper$life_stages, TRUE)),
+              HTML(format_field(paper$research_article_type)),
+              HTML(format_field(paper$activity, TRUE))
+            ),
+            div(class = "paper-meta-row",
+              HTML(format_field(paper$stressor_name, TRUE)),
+              HTML(format_field(paper$specific_stressor_metric, TRUE)),
+              HTML(format_field(paper$broad_stressor_name)),
+              HTML(format_field(paper$genus_latin, TRUE))
+            ),
+            div(class = "paper-meta-row",
+              HTML(format_field(paper$location_river_creek)),
+              HTML(format_field(paper$location_watershed_lab)),
+              HTML(format_field(paper$location_state_province)),
+              HTML(format_field(paper$location_country))
             )
-          )
+
         )
+      )
+
       })
     )
   })
