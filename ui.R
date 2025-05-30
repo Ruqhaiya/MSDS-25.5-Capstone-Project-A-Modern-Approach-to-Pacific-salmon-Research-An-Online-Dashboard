@@ -8,6 +8,8 @@ source("modules/upload.R", local = TRUE)
 source("modules/manage_categories.R", local = TRUE)
 source("modules/about_us.R", local = TRUE)
 source("modules/acknowledgement.R", local = TRUE)
+source("modules/eda.R", local = TRUE)
+
 
 # Static resource for team images
 addResourcePath("teamimg", "modules/images")
@@ -25,109 +27,7 @@ ui <- navbarPage(
     fluidPage(
       useShinyjs(),
       tags$head(
-        tags$style(HTML("
-    body {
-      background-color: #FFFFFF!important;
-      color: #1c1c1c;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
-    }
-
-    h1 {
-      color: #0077b6;
-      font-size: 32px;
-      font-weight: bold;
-    }
-
-    h2 {
-      color: #0077b6;
-      font-size: 26px;
-      font-weight: bold;
-    }
-
-    h3 {
-      color: #0077b6;
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    label, .control-label, .shiny-input-container {
-      color: #1c1c1c;
-      font-size: 15px;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
-    }
-
-    .navbar-default {
-      background-color: #ffffff;
-      border-bottom: 3px solid #90e0ef;
-    }
-
-    .navbar-default .navbar-nav > li > a,
-    .navbar-default .navbar-brand {
-      color: #0077b6 !important;
-    }
-
-    .btn-primary, .btn-success {
-      background-color: #00b4d8;
-      border-color: #00b4d8;
-      color: #ffffff;
-    }
-
-    .btn-primary:hover, .btn-success:hover {
-      background-color: #0096c7;
-    }
-
-    .well, .panel {
-      background-color: #ffffff;
-      border-left: 4px solid #90e0ef;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .selectize-input {
-      background-color: #ffffff !important;
-      border: 1px solid #90e0ef !important;
-    }
-
-    .form-control:focus {
-      border-color: #00b4d8;
-      box-shadow: 0 0 5px rgba(0,180,216,0.5);
-    }
-
-    .checkbox label, .radio label {
-      font-weight: 500;
-      font-size: 15px;
-    }
-
-    .dropdown-menu {
-      background-color: #f0fdff;
-    }
-
-    .dropdown-menu > li > a:hover {
-      background-color: #90e0ef;
-      color: #03045e;
-    }
-
-    #main_navbar {
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .hover-highlight {
-      background-color: #ffffff;
-      border: 2px solid transparent;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
-    }
-
-    .hover-highlight:hover {
-      background-color: #DCEEFF;
-      border-color: #4682b4;
-      cursor: pointer;
-    }
-
-    *:focus {
-      outline: 2px dashed #0077b6;
-      outline-offset: 3px;
-    }
-  "))
+          includeCSS("www/custom.css")
       ),
       
       
@@ -144,6 +44,8 @@ ui <- navbarPage(
   ),
   
   # Dashboard Tab
+
+  tabPanel("Analyze Data", edaUI("eda")),
   tabPanel(
     title = "SRF Dashboard",
     value = "dashboard",
@@ -207,10 +109,13 @@ ui <- navbarPage(
           )
         ),
         fluidRow(
-          column(4, offset = 4,
-                 actionButton("prev_page", "<< Previous"),
-                 textOutput("page_info", inline = TRUE),
-                 actionButton("next_page", "Next >>"))
+          column(12,
+                div(style = "text-align: center; margin-bottom: 10px;",
+                    actionButton("prev_page", "<< Previous", class = "btn btn-sm"),
+                    span(textOutput("page_info", inline = TRUE), style = "margin: 0 10px; font-size: 13px;"),
+                    actionButton("next_page", "Next >>", class = "btn btn-sm")
+                )
+          )
         ),
         fluidRow(
           column(12,
