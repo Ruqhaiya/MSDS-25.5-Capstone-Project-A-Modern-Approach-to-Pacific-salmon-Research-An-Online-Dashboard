@@ -4,4 +4,4 @@ source("ui.R")
 source("server.R")
 
 # This line runs the app
-shinyApp(ui = ui, server = server) 
+shinyApp(ui = ui, server = server)
