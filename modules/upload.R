@@ -199,7 +199,10 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
         values <- input[[input_id]]
         if (!is.null(values)) {
           for (val in values) {
-            dbExecute(con, sprintf("INSERT OR IGNORE INTO %s (name) VALUES (?)", table), params = list(val))
+            existing <- dbGetQuery(con, sprintf("SELECT 1 FROM %s WHERE LOWER(name) = LOWER(?) LIMIT 1", table), params = list(val))
+            if (nrow(existing) == 0) {
+              dbExecute(con, sprintf("INSERT INTO %s (name) VALUES (?)", table), params = list(val))
+            }
           }
         }
       }
