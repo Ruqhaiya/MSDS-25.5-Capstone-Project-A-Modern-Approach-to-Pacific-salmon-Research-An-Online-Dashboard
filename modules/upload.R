@@ -1,288 +1,264 @@
+# nolint start
 
-library(shiny)
-library(DBI)
-library(RSQLite)
-library(base64enc)
-library(shinyjs)
+# Compact Upload UI (Updated + Centered & Spacing Reduced)
 
-
-# we have server code here but will separate it later. 
 upload_ui <- function(id) {
   ns <- NS(id)
+
+  picker_opts <- list(
+    'actions-box' = TRUE,
+    'live-search' = TRUE
+  )
+
   tagList(
-    fluidRow(column(12, h3("(Under Construction) Submit New Research Data", style = "text-align: center; color: #6082B6;"))),
+
+    shinyjs::useShinyjs(),
+    tags$head(
+        includeCSS("www/custom.css")
+        ),
     fluidRow(
-      column(6, textInput(ns("title"), "Title *", placeholder = "Enter a short title (required)")),
-      column(6, selectInput(ns("stressor_name"), "Stressor Name", c("", stressor_names)))
+      column(12, h3("Submit New Research Data", style = "text-align: center; color: #6082B6;"))
     ),
+
+    # Core Metadata
     fluidRow(
-      column(6, selectInput(ns("specific_stressor_metric"), "Specific Stressor Metric", c("", stressor_metrics))),
-      column(6, textInput(ns("stressor_units"), "Stressor Units", placeholder = "Enter units (e.g., °C, mg/L)"))
-    ),
-    fluidRow(
-      column(6, selectInput(ns("species_common_name"), "Species Common Name", c("", species_names))),
-      column(6, selectInput(ns("genus_latin"), "Genus Latin", c("", genus_latin)))
-    ),
-    fluidRow(
-      column(6, selectInput(ns("species_latin"), "Species Latin", c("", species_latin))),
-      column(6, selectInput(ns("geography"), "Geography", c("", geographies)))
+      column(6, offset = 3, textInput(ns("title"), "Title *", placeholder = "Add a short descriptive title such as Coho Fry and Stream Temperature", width = "800px"))
     ),
     fluidRow(
-      column(6, selectInput(ns("life_stage"), "Life Stage", c("", life_stages))),
-      column(6, selectInput(ns("activity"), "Activity", c("", activities)))
-    ),
-    fluidRow(column(12, textAreaInput(ns("description_overview"), "Detailed SR Function Description", "", width = "100%", height = "100px"))),
-    fluidRow(
-      column(6, textAreaInput(ns("description_function_derivation"), "Function Derivation", "", width = "100%", height = "80px")),
-      column(6, textAreaInput(ns("description_transferability_of_function"), "Transferability of Function", "", width = "100%", height = "80px"))
-    ),
-    # csv data 
-    fluidRow(column(12, textAreaInput(ns("description_source_of_stressor_data1"), "Source of Stressor Data", "", width = "100%", height = "100px"))),
-    fluidRow(
-      column(12,
-             wellPanel(
-               style = "background-color: #ffeef0; border-color: #ffeef0;",
-               tags$strong("Use the SR curve tracing tool", style = "color: #003366;"),
-               br(), br(),
-               downloadLink(ns("download_sample_csv"), "Download Sample CSV"),
-               tags$br(), tags$br(),
-               tags$strong("Stressor Response csv data"),
-               fileInput(ns("sr_csv_file"), NULL,
-                         accept = c(".csv"),
-                         buttonLabel = "Choose File",
-                         placeholder = "No file chosen"),
-               helpText("Upload a CSV data file for the SR relationship. Columns (with headings) should include stressor, response, sd, low_limit, and up_limit.",
-                        "One file only.", "2 MB limit.", "Allowed types: csv.")
-             )
-      )
-    ),
-    
-    tabsetPanel(
-      tabPanel("Response Details",
-               textInput(ns("vital_rate"), "Vital Rate (Process)", placeholder = "Enter vital rate details"),
-               textInput(ns("season"), "Season", placeholder = "Describe seasonal timing"),
-               textInput(ns("activity_details"), "Activity", placeholder = "Describe activity (if applicable)")
-      ),
-      tabPanel("Stressor Details",
-               textInput(ns("stressor_magnitude"), "Stressor Magnitude Data", placeholder = "Source of stressor magnitude data"),
-               textInput(ns("poe_chain"), "PoE Chain", placeholder = "Describe PoE chain"),
-               textInput(ns("key_covariates"), "Key Covariates & Dependencies", placeholder = "List key covariates")
-      )
-    ),
-    tabsetPanel(
-      tabPanel(
-        "Citations (as text)",
-        textAreaInput(ns("citation_text"), "Citations (text)", "",
-                      width = "100%", height = "100px")
-      ),
-      tabPanel(
-        "Citations (as links)",
-        textInput(ns("citation_url"),      "URL",       placeholder = "Enter citation link"),
-        textInput(ns("citation_link_text"),"Link text", placeholder = "Enter display text for the link"),
-        uiOutput(ns("preview_citation_link"))
-      )
-    ),
-    
-    fluidRow(
-      column(4, wellPanel(strong("Revision information"), br(), "No revision")),
-      column(8, textAreaInput(ns("revision_log"), "Revision log message", "", width = "100%", height = "100px"))
+      column(3, offset = 3, pickerInput(ns("stressor_name"), "Stressor Name", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL)),
+      column(3, pickerInput(ns("specific_stressor_metric"), "Specific Stressor Metric", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL))
     ),
     fluidRow(
-      column(6, actionButton(ns("save"), "Save SR Profile", style = "background-color: #6082B6; color: white;")),
-      column(6, actionButton(ns("preview"), "Preview", style = "background-color: #6082B6; color: white;"))
+      column(3, offset = 3, textInput(ns("stressor_units"), "Stressor Units", placeholder = "e.g., °C, mg/L")),
+      column(3)
+    ),
+
+    # Species Info
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("species_common_name"), "Species Common Name", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL)),
+      column(3, pickerInput(ns("genus_latin"), "Genus Latin", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL))
+    ),
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("species_latin"), "Species Latin", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL)),
+      column(3, pickerInput(ns("geography"), "Geography", NULL, multiple = TRUE, options = picker_opts, 
+        choices = NULL, selected = NULL))
+    ),
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("life_stage"), "Life Stage", NULL, multiple = TRUE, options = picker_opts)),
+      column(3, pickerInput(ns("activity"), "Activity", NULL, multiple = TRUE, options = picker_opts))
+    ),
+
+    # New Metadata Fields
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("research_article_type"), "Research Article Type", NULL, multiple = TRUE, options = picker_opts)),
+      column(3, pickerInput(ns("location_country"), "Country", NULL, multiple = TRUE, options = picker_opts))
+    ),
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("location_state_province"), "State / Province", NULL, multiple = TRUE, options = picker_opts)),
+      column(3, pickerInput(ns("location_watershed_lab"), "Watershed / Lab", NULL, multiple = TRUE, options = picker_opts))
+    ),
+    fluidRow(
+      column(3, offset = 3, pickerInput(ns("location_river_creek"), "River / Creek", NULL, multiple = TRUE, options = picker_opts)),
+      column(3, pickerInput(ns("broad_stressor_name"), "Broad Stressor Name", NULL, multiple = TRUE, options = picker_opts))
+    ),
+
+    # Description Fields
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("description_overview"), "Detailed SR Function Description", 
+        placeholder = "Describe importance and why it is being included. Include key pieces of information, such as the original source formula, function derivation, pathways of effect etc.", height = "200px", width = "800px"))
+    ),
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("description_function_derivation"), "Function Derivation", 
+        placeholder = "Describe the source of the function (e.g., expert opinion, mechanistic or theory based, correlative model etc.)", height = "200px", width = "800px"))
+    ),
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("description_transferability_of_function"), "Transferability of Function", 
+        placeholder = "Describe notes regarding the transferability of the function to other species and systems.", height = "200px", width = "800px"))
+    ),
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("description_source_of_stressor_data1"), "Source of Stressor Data", 
+        placeholder = "Describe the source of stressor data needed to apply the function", height = "200px", width = "800px"))
+    ),
+
+    # CSV Upload
+    fluidRow(
+      column(6, offset = 3, wellPanel(
+        style = "background-color: #f9f9f9; border-color: #ccc;",
+        strong("SR Curve Data CSV"),
+        fileInput(ns("sr_csv_file"), NULL, accept = ".csv", buttonLabel = "Choose File", placeholder = "No file chosen"),
+        helpText("Upload a csv data file for the SR relationship. Columns should include stressor, response, sd, low_limit, up_limit.",
+                 "One file only.", "2 MB limit.", "Allowed types: csv.")
+      ))
+    ),
+
+     # Vital Rate Tab
+    fluidRow(
+      column(3, offset = 3, textInput(ns("vital_rate"), "Vital Rate (Process)", placeholder = "Enter vital rate details")),
+      column(3, textInput(ns("season"), "Season", placeholder = "Describe seasonal timing"))
+    ),
+    fluidRow(
+      column(6, offset = 3, textInput(ns("activity_details"), "Activity Details", placeholder = "Describe activity (if applicable)"))
+    ),
+
+    # Stressor Details
+    fluidRow(
+      column(3, offset = 3, textInput(ns("stressor_magnitude"), "Stressor Magnitude Data", placeholder = "Source of stressor magnitude data (e.g., GIS layer, field collection etc.)")),
+      column(3, textInput(ns("poe_chain"), "PoE Chain", placeholder = "Describe PoE chain (e.g., agriculture, runoff, nutrients, productivity, hypoxia, fish)"))
+    ),
+    fluidRow(
+      column(6, offset = 3, textInput(ns("key_covariates"), "Key Covariates & Dependencies", 
+        placeholder = "Describe key covariates and dependencies separately on each line (e.g., NTU > 5; Hardness < 200 mg/L; only applicable to lentic systems etc.). Use personal judgment (don't include all study parameters).", width = "100%"))
+    ),
+
+    # Citations Tabs
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("citation_text"), "Citations (as text)", 
+        placeholder = "Citations in APA format. Use reference from Google Scholar if possible.", height = "70px"))
+    ),
+    fluidRow(
+      column(3, offset = 3, textInput(ns("citation_url"), "Citation URL", placeholder = "http://example.com")),
+      column(3, textInput(ns("citation_link_text"), "Citation Link Text", placeholder = "Display text for the link"))
+    ),
+
+    # Revision Log and Submit
+    fluidRow(
+      column(6, offset = 3, textAreaInput(ns("revision_log"), "Revision Log Message", 
+        placeholder = "Briefly describe any updates or changes made", height = "60px"))
+    ),
+    fluidRow(
+      column(3, offset = 3, actionButton(ns("save"), "Save SR Profile", class = "btn-primary")),
+      column(3, actionButton(ns("preview"), "Preview", class = "btn-secondary"))
     )
   )
 }
 
-# Server: currently writes only existing text fields into stressor_responses
 upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
   moduleServer(id, function(input, output, session) {
-    observeEvent(input$save, {
-      # 1) Basic validation
-      req(input$title, input$sr_csv_file)
-      
-      # 2) Connect to DB
-      con <- dbConnect(SQLite(), dbname = db_path)
+    ns <- session$ns
+
+    # Map UI input IDs to lookup tables
+    lookup_tables <- c(
+      "stressor_name" = "stressor_names",
+      "specific_stressor_metric" = "stressor_metrics",
+      "species_common_name" = "species_common_names",
+      "genus_latin" = "genus_latins",
+      "species_latin" = "species_latins",
+      "geography" = "geographies",
+      "life_stage" = "life_stages",
+      "activity" = "activities",
+      "research_article_type" = "research_article_types",
+      "location_country" = "location_countries",
+      "location_state_province" = "location_states_provinces",
+      "location_watershed_lab" = "location_watersheds_labs",
+      "location_river_creek" = "location_rivers_creeks",
+      "broad_stressor_name" = "broad_stressor_names"
+    )
+
+    # Populate dropdowns on page load
+    session$onFlushed(function() {
+      con <- dbConnect(SQLite(), db_path)
       on.exit(dbDisconnect(con), add = TRUE)
-      
-      # 3) Duplicate title check
-      exists_flag <- dbGetQuery(con,
-                                "SELECT EXISTS(SELECT 1 FROM stressor_responses WHERE title = ?) AS e;",
-                                params = list(input$title)
-      )$e
-      if (exists_flag) {
-        showNotification("⚠️ That title already exists.", type = "warning")
+
+      for (input_id in names(lookup_tables)) {
+        table <- lookup_tables[[input_id]]
+        query <- sprintf("SELECT name FROM %s WHERE name IS NOT NULL AND TRIM(name) != '' ORDER BY name", table)
+        values <- dbGetQuery(con, query)$name
+        updatePickerInput(session, inputId = input_id, choices = values, selected = NULL)
+      }
+    }, once = TRUE)
+
+    # Save data when button is clicked
+    observeEvent(input$save, {
+
+      req(input$title)
+
+
+      con <- dbConnect(SQLite(), db_path)
+      on.exit(dbDisconnect(con), add = TRUE)
+
+       # Check if the title already exists
+      existing_title <- dbGetQuery(con, "SELECT 1 FROM stressor_responses WHERE title = ? LIMIT 1", params = list(input$title))
+
+      if (nrow(existing_title) > 0) {
+        showModal(modalDialog(
+          title = "⚠️ Duplicate Title",
+          "A stressor response with this title already exists. Please use a different title.",
+          easyClose = TRUE
+        ))
         return()
       }
       
-      # 4) Insert into stressor_responses (without csv_data_json or images)
-      dbExecute(con,
-                "INSERT INTO stressor_responses (
-           article_id, title,
-           stressor_name, stressor_units,
-           specific_stressor_metric, species_common_name,
-           species_latin, genus_latin, geography,
-           activity, season, life_stages,
-           citation_link, covariates_dependencies,
-           description_overview, description_function_derivation,
-           description_transferability_of_function,
-           description_source_of_stressor_data1,
-           citations_citation_text, citations_citation_links
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                params = list(
-                  NA,
-                  input$title,
-                  input$stressor_name,
-                  input$stressor_units,
-                  input$specific_stressor_metric,
-                  input$species_common_name,
-                  input$species_latin,
-                  input$genus_latin,
-                  input$geography,
-                  input$activity,
-                  input$season,
-                  input$life_stage,
-                  paste0(input$citation_link_text, " (", input$citation_url, ")"),
-                  input$key_covariates,
-                  input$description_overview,
-                  input$description_function_derivation,
-                  input$description_transferability_of_function,
-                  input$description_source_of_stressor_data1,
-                  input$citation_text,
-                  paste0(input$citation_link_text, " (", input$citation_url, ")")
-                )
-      )
-      
-      # 5) Grab the new main_id
-      main_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id;")$id[[1]]
-      
-      # 6) Read & reshape the CSV with main_id
-      df_raw <- read.csv(input$sr_csv_file$datapath, stringsAsFactors = FALSE)
-      stressor_label        <- names(df_raw)[1]
-      scaled_response_label <- names(df_raw)[2]
-      names(df_raw)[1:2] <- c("stressor_value", "scaled_response_value")
-      
-      df_json <- df_raw
-      df_json$id                     <- main_id
-      df_json$stressor_label         <- stressor_label
-      df_json$scaled_response_label  <- scaled_response_label
-      df_json$article_stressor_label <- input$stressor_name
-      df_json <- df_json[, c(
-        "id",
-        "stressor_label", "stressor_value",
-        "scaled_response_label", "scaled_response_value",
-        "article_stressor_label",
-        intersect(c("sd", "low_limit", "up_limit"), names(df_json))
-      )]
-      json_data <- jsonlite::toJSON(df_json, dataframe = "rows", auto_unbox = TRUE)
-      
-      # 7) Update the main table with csv_data_json
-      dbExecute(con,
-                "UPDATE stressor_responses
-           SET csv_data_json = ?
-         WHERE main_id = ?;",
-                params = list(json_data, main_id)
-      )
-      
-      # 8) Insert into csv_meta
-      dbExecute(con,
-                "INSERT INTO csv_meta (
-           article_id, main_id,
-           stressor_label, scaled_response_label,
-           article_stressor_label, csv_data_json
-         ) VALUES (?, ?, ?, ?, ?, ?);",
-                params = list(
-                  NA,
-                  main_id,
-                  stressor_label,
-                  scaled_response_label,
-                  input$stressor_name,
-                  json_data
-                )
-      )
-      csv_id <- dbGetQuery(con, "SELECT last_insert_rowid() AS id;")$id[[1]]
-      
-      # 9) Insert each row into csv_numeric
-      for (i in seq_len(nrow(df_raw))) {
-        row <- df_raw[i, ]
-        dbExecute(con,
-                  "INSERT INTO csv_numeric (
-             csv_id, row_index,
-             stressor_value, scaled_response_value,
-             sd, low_limit, up_limit
-           ) VALUES (?, ?, ?, ?, ?, ?, ?);",
-                  params = list(
-                    csv_id, i,
-                    row[["stressor_value"]], row[["scaled_response_value"]],
-                    if ("sd"        %in% names(row)) row[["sd"]]        else NA,
-                    if ("low_limit"%in% names(row)) row[["low_limit"]]  else NA,
-                    if ("up_limit"%in% names(row)) row[["up_limit"]]   else NA
-                  )
-        )
+      # Step 1: Insert new metadata values into lookup tables
+      for (input_id in names(lookup_tables)) {
+        table <- lookup_tables[[input_id]]
+        values <- input[[input_id]]
+        if (!is.null(values)) {
+          for (val in values) {
+            dbExecute(con, sprintf("INSERT OR IGNORE INTO %s (name) VALUES (?)", table), params = list(val))
+          }
+        }
       }
-      
-      # 10) Success message & reset
+
+      # Step 2: Insert into main table - FIXED COLUMN NAMES
+      dbExecute(con, "
+        INSERT INTO stressor_responses (
+          title, stressor_name, specific_stressor_metric, stressor_units,
+          species_common_name, genus_latin, species_latin, geography,
+          life_stages, activity, research_article_type, location_country,
+          location_state_province, location_watershed_lab, location_river_creek,
+          broad_stressor_name, description_overview, description_function_derivation,
+          description_transferability_of_function, description_source_of_stressor_data1,
+          vital_rate, season, activity_details, stressor_magnitude, poe_chain,
+          covariates_dependencies, citations_citation_text, citations_citation_links,
+          citation_link, revision_log
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ",
+      params = list(
+        input$title,
+        paste(input$stressor_name, collapse = ", "),
+        paste(input$specific_stressor_metric, collapse = ", "),
+        input$stressor_units,
+        paste(input$species_common_name, collapse = ", "),
+        paste(input$genus_latin, collapse = ", "),
+        paste(input$species_latin, collapse = ", "),
+        paste(input$geography, collapse = ", "),
+        paste(input$life_stage, collapse = ", "),
+        paste(input$activity, collapse = ", "),
+        paste(input$research_article_type, collapse = ", "),
+        paste(input$location_country, collapse = ", "),
+        paste(input$location_state_province, collapse = ", "),
+        paste(input$location_watershed_lab, collapse = ", "),
+        paste(input$location_river_creek, collapse = ", "),
+        paste(input$broad_stressor_name, collapse = ", "),
+        input$description_overview,
+        input$description_function_derivation,
+        input$description_transferability_of_function,
+        input$description_source_of_stressor_data1,
+        input$vital_rate,
+        input$season,
+        input$activity_details,
+        input$stressor_magnitude,
+        input$poe_chain,
+        input$key_covariates,
+        input$citation_text,
+        input$citation_link_text,
+        paste0(input$citation_link_text, " (", input$citation_url, ")"),
+        input$revision_log
+      ))
+
+      # Step 3: Success modal
       showModal(modalDialog(
         title = "✅ Success!",
-        paste0("Your entry titled “", input$title, "” has been saved (ID = ", main_id, ")."),
-        easyClose = TRUE,
-        footer = modalButton("Close")
-      ))
-      updateTextInput(session, "title", value = "")
-      reset("sr_csv_file")
-    })
-    
-    # Sample CSV download remains unchanged
-    output$download_sample_csv <- downloadHandler(
-      filename = function()  "demo_sr.csv",
-      content  = function(file) file.copy("data/demo_sr.csv", file)
-    )
-    
-    # Citation‐link preview
-    output$preview_citation_link <- renderUI({
-      req(input$citation_url, input$citation_link_text)
-      tags$p(
-        strong("Citation Preview: "),
-        tags$a(input$citation_link_text,
-               href = input$citation_url,
-               target = "_blank",
-               style  = "color: #337ab7; text-decoration: underline;")
-      )
-    })
-    
-    # Preview logic 
-    observeEvent(input$preview, {
-      showModal(modalDialog(
-        title = "Preview Submission",
-        HTML(paste(
-          "<b>Title:</b>", input$title, "<br>",
-          "<b>Stressor Name:</b>", input$stressor_name, "<br>",
-          "<b>Specific Stressor Metric:</b>", input$specific_stressor_metric, "<br>",
-          "<b>Stressor Units:</b>", input$stressor_units, "<br>",
-          "<b>Species Common Name:</b>", input$species_common_name, "<br>",
-          "<b>Genus Latin:</b>", input$genus_latin, "<br>",
-          "<b>Species Latin:</b>", input$species_latin, "<br>",
-          "<b>Geography:</b>", input$geography, "<br>",
-          "<b>Life Stage:</b>", input$life_stage, "<br>",
-          "<b>Activity:</b>", input$activity, "<br>",
-          "<b>Description Overview:</b>", input$description_overview, "<br>",
-          "<b>Function Derivation:</b>", input$description_function_derivation, "<br>",
-          "<b>Transferability of Function:</b>", input$description_transferability_of_function, "<br>",
-          "<b>Source of Stressor Data:</b>", input$description_source_of_stressor_data1, "<br>",
-          "<b>Vital Rate:</b>", input$vital_rate, "<br>",
-          "<b>Season:</b>", input$season, "<br>",
-          "<b>Activity Details:</b>", input$activity_details, "<br>",
-          "<b>Stressor Magnitude Data:</b>", input$stressor_magnitude, "<br>",
-          "<b>PoE Chain:</b>", input$poe_chain, "<br>",
-          "<b>Key Covariates & Dependencies:</b>", input$key_covariates, "<br>",
-          "<b>Citation Text:</b>", input$citation_text, "<br>",
-          "<b>Citation URL:</b>", input$citation_url, "<br>",
-          "<b>Citation Link Text:</b>", input$citation_link_text, "<br>",
-          "<b>Revision Log:</b>", input$revision_log
-        )),
-        easyClose = TRUE,
-        footer = modalButton("Close")
+        "Your stressor response profile has been saved.",
+        easyClose = TRUE
       ))
     })
   })
 }
+
+# nolint end

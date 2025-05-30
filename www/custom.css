@@ -1,0 +1,39 @@
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Compact form controls */
+.form-control,
+.selectpicker {
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+}
+
+/* Label adjustments */
+label,
+.control-label {
+  font-size: 13px !important;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* Reduce spacing between form elements */
+.shiny-input-container {
+  margin-bottom: 10px;
+}
+
+/* Limit dropdown height and enable scroll */
+.dropdown-menu.inner {
+  max-height: 150px !important;
+  overflow-y: auto !important;
+}
+
+
+textarea.form-control {
+  font-size: 14px;
+  min-height: 150px;
+}
+.shiny-input-container {
+  margin-bottom: 10px;
+}
