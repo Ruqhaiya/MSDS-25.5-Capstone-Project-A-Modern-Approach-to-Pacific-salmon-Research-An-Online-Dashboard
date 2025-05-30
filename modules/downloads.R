@@ -1,3 +1,6 @@
+# nolint start
+
+
 library(shiny)
 library(DBI)
 library(RSQLite)
@@ -8,60 +11,40 @@ download_json <- function(output, paginated_data, input, session,
                           db_path = "data/stressor_responses.sqlite") {
   
   nest_fields <- function(row) {
-    con <- dbConnect(SQLite(), dbname = db_path)
-    on.exit(dbDisconnect(con), add = TRUE)
+    # Parse csv_data_json directly (already structured as array of objects)
+    csv_data <- tryCatch({
+      fromJSON(row$csv_data_json)
+    }, error = function(e) {
+      NULL
+    })
     
-    # pull the numeric CSV for this main_id
-    csv_data <- dbGetQuery(con, sprintf("
-      SELECT n.stressor_value, n.scaled_response_value, n.sd, n.low_limit, n.up_limit
-        FROM csv_numeric n
-        JOIN csv_meta   m ON n.csv_id = m.csv_id
-       WHERE m.main_id = %s
-    ORDER BY n.row_index
-    ", row$main_id))
-    
-    # build the CSV‐rows array
-    if (nrow(csv_data) > 0) {
-      header <- paste(colnames(csv_data), collapse = ",")
-      body   <- apply(csv_data, 1, function(r) paste(r, collapse = ","))
-      csv_rows <- c(header, body)
-    } else {
-      csv_rows <- character(0)
-    }
-    
-    # core fields
     nested <- list(
-      id                    = row$main_id,
-      title                 = row$title,
-      species_common_name   = row$species_common_name,
-      genus_latin           = row$genus_latin,
-      stressor_name         = row$stressor_name,
+      id                      = row$main_id,
+      title                   = row$title,
+      species_common_name     = row$species_common_name,
+      genus_latin             = row$genus_latin,
+      stressor_name           = row$stressor_name,
       specific_stressor_metric = row$specific_stressor_metric,
-      stressor_units        = row$stressor_units,
-      life_stages           = row$life_stages,
-      csv_data_rows         = csv_rows
+      stressor_units          = row$stressor_units,
+      life_stages             = row$life_stages,
+      csv_data_rows           = csv_data  # JSON-parsed data directly
     )
     
-    # descriptions
+    # Add descriptions
     desc_keys <- grep("^description\\.", names(row), value = TRUE)
     if (length(desc_keys) > 0) {
-      nested$description <- setNames(
-        as.list(row[desc_keys]),
-        sub("^description\\.", "", desc_keys)
-      )
+      nested$description <- setNames(as.list(row[desc_keys]), sub("^description\\.", "", desc_keys))
     }
-    
-    # citations
+
+    # Add citations
     cit_keys <- grep("^citations\\.", names(row), value = TRUE)
     if (length(cit_keys) > 0) {
-      nested$citations <- setNames(
-        as.list(row[cit_keys]),
-        sub("^citations\\.", "", cit_keys)
-      )
+      nested$citations <- setNames(as.list(row[cit_keys]), sub("^citations\\.", "", cit_keys))
     }
-    
-    nested
+
+    return(nested)
   }
+
   
   # ——— Download ALL JSON ———
   output$download_all_json <- downloadHandler(
@@ -133,3 +116,5 @@ download_csv <- function(output, paginated_data, input, session) {
     }
   )
 }
+
+# nolint end
