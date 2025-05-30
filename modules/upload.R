@@ -206,6 +206,15 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
           }
         }
       }
+     
+      # Convert uploaded CSV to JSON string
+      csv_json <- NULL
+      if (!is.null(input$sr_csv_file)) {
+        try({
+          df_csv <- read.csv(input$sr_csv_file$datapath, stringsAsFactors = FALSE)
+          csv_json <- jsonlite::toJSON(df_csv, pretty = TRUE, auto_unbox = TRUE)
+        }, silent = TRUE)
+      }
 
       # Step 2: Insert into main table - FIXED COLUMN NAMES
       dbExecute(con, "
@@ -218,8 +227,8 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
           description_transferability_of_function, description_source_of_stressor_data1,
           vital_rate, season, activity_details, stressor_magnitude, poe_chain,
           covariates_dependencies, citations_citation_text, citations_citation_links,
-          citation_link, revision_log
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          citation_link, revision_log, csv_data_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ",
       params = list(
         input$title,
@@ -251,7 +260,9 @@ upload_server <- function(id, db_path = "data/stressor_responses.sqlite") {
         input$citation_text,
         input$citation_link_text,
         paste0(input$citation_link_text, " (", input$citation_url, ")"),
-        input$revision_log
+        input$revision_log,
+        csv_json
+
       ))
 
       # Step 3: Success modal
