@@ -1,12 +1,15 @@
+# nolint start
 render_papers_server <- function(output, paginated_data, input, session) {
   output$paper_cards <- renderUI({
     data_to_display <- paginated_data()
     
-    format_field <- function(val, bold = FALSE) {
+    format_field <- function(label, val, bold = FALSE) {
       display <- ifelse(is.na(val) || val == "NA", "", val)
-      style <- if (bold) "metadata-bold" else "metadata-light"
-      title_attr <- if (nzchar(display)) paste0("title='", htmltools::htmlEscape(display), "'") else ""
-      sprintf("<div class='paper-meta-item %s' %s>%s</div>", style, title_attr, htmltools::htmlEscape(display))
+      if (display == "") return("")
+      value_span <- sprintf("<span class='%s'>%s</span>", if (bold) "metadata-bold" else "metadata-light", htmltools::htmlEscape(display))
+      label_span <- sprintf("<span class='metadata-label'>%s:</span> ", htmltools::htmlEscape(label))
+      div_class <- "paper-meta-item"
+      sprintf("<div class='%s' title='%s'>%s%s</div>", div_class, htmltools::htmlEscape(display), label_span, value_span)
     }
 
 
@@ -51,22 +54,23 @@ render_papers_server <- function(output, paginated_data, input, session) {
 
             # Metadata rows
             div(class = "paper-meta-row",
-              HTML(format_field(paper$species_common_name, TRUE)),
-              HTML(format_field(paper$life_stages, TRUE)),
-              HTML(format_field(paper$research_article_type)),
-              HTML(format_field(paper$activity, TRUE))
+              HTML(format_field("Common Name", paper$species_common_name, TRUE)),
+              HTML(format_field("Life Stage", paper$life_stages, TRUE)),
+              HTML(format_field("Type", paper$research_article_type)),
+              HTML(format_field("Activity", paper$activity, TRUE))
             ),
             div(class = "paper-meta-row",
-              HTML(format_field(paper$stressor_name, TRUE)),
-              HTML(format_field(paper$specific_stressor_metric, TRUE)),
-              HTML(format_field(paper$broad_stressor_name)),
-              HTML(format_field(paper$genus_latin, TRUE))
+              HTML(format_field("Stressor", paper$stressor_name, TRUE)),
+              HTML(format_field("Metric", paper$specific_stressor_metric, TRUE)),
+              HTML(format_field("Broad Stressor", paper$broad_stressor_name)),
+              HTML(format_field("Genus Latin", paper$genus_latin, TRUE))
+
             ),
             div(class = "paper-meta-row",
-              HTML(format_field(paper$location_river_creek)),
-              HTML(format_field(paper$location_watershed_lab)),
-              HTML(format_field(paper$location_state_province)),
-              HTML(format_field(paper$location_country))
+              HTML(format_field("River/Creek", paper$location_river_creek)),
+              HTML(format_field("Watershed/Lab", paper$location_watershed_lab)),
+              HTML(format_field("State/Province", paper$location_state_province)),
+              HTML(format_field("Country", paper$location_country))
             )
 
         )
@@ -88,3 +92,4 @@ render_papers_server <- function(output, paginated_data, input, session) {
     }
   })
 }
+# nolint end
