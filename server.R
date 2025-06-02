@@ -120,10 +120,14 @@ server <- function(input, output, session) {
     df
   })
   
-  pagination <- pagination_server(input, filtered_data)
+  # pagination <- pagination_server(input, filtered_data)
+  # paginated_data <- pagination$paginated_data
+  # output$page_info <- renderText(pagination$page_info())
+  pagination <- pagination_server(input, output, session, filtered_data)
   paginated_data <- pagination$paginated_data
   output$page_info <- renderText(pagination$page_info())
-  
+  output$page_info_top <- renderText(pagination$page_info())
+
   update_filters_server(input, output, session, data, db)
   toggle_filters_server(input, session)
   reset_filters_server(input, session)
