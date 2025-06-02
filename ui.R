@@ -27,8 +27,17 @@ ui <- navbarPage(
     fluidPage(
       useShinyjs(),
       tags$head(
-          includeCSS("www/custom.css")
+        includeCSS("www/custom.css"),
+        tags$style(HTML("
+          #back_to_top_fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+          }
+        "))
       ),
+
       
       
       h1("Welcome to NOAA Dashboard"),
@@ -117,6 +126,8 @@ ui <- navbarPage(
                 )
           )
         ),
+
+
         fluidRow(
           column(12,
                  div(
@@ -145,7 +156,37 @@ ui <- navbarPage(
         ),
         fluidRow(
           column(6, offset = 3, uiOutput("paper_cards"))
-        )
+        ),
+        br(), br(),
+
+        fluidRow(
+          column(12, align = "center",
+            actionButton("load_more_mode", "Load More", icon = icon("plus")),
+            tags$br(), tags$br()
+          )
+        ),
+        # Back to Top floating button
+        tags$div(
+          id = "back_to_top_fab",
+          actionButton(
+            inputId = "back_to_top",
+            label = NULL,
+            icon = icon("arrow-up"),
+            class = "btn btn-outline-secondary rounded-circle",
+            style = "width: 50px; height: 50px; font-size: 24px;"
+          )
+        ),
+        tags$script(HTML("
+            $(document).on('click', '#back_to_top', function() {
+              $('html, body').animate({ scrollTop: 0 }, 'slow');
+            });
+          ")),
+        tags$script(HTML("
+          $(document).on('click', '#next_page, #prev_page', function() {
+            $('html, body').animate({ scrollTop: 0 }, 'smooth');
+          });
+        "))
+
       ),
       
       conditionalPanel(
