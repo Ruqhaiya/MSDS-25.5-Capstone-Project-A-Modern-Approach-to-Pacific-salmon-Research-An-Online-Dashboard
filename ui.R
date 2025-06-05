@@ -29,13 +29,25 @@ ui <- navbarPage(
       tags$head(
         includeCSS("www/custom.css"),
         tags$style(HTML("
-          #back_to_top_fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-          }
-        "))
+    #back_to_top_fab {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 9999;
+    }
+    .dropdown-menu {
+      padding: 20px;
+    }
+    .radio label {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  ")),
+        tags$script(HTML("
+    Shiny.addCustomMessageHandler('download_csv', function(data) {
+      document.getElementById(data.id).click();
+    });
+  "))
       ),
 
       
@@ -127,33 +139,26 @@ ui <- navbarPage(
           )
         ),
 
-
-        fluidRow(
-          column(12,
-                 div(
-                   style = "display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;",
-                   dropdownButton(
-                     circle = FALSE,
-                     status = "primary",
-                     label = "Download All",
-                     icon = icon("download"),
-                     tooltip = tooltipOptions(title = "Choose format"),
-                     actionButton("trigger_json_all", "Download JSON", class = "btn-link"),
-                     actionButton("trigger_csv_all", "Download CSV", class = "btn-link")
-                   ),
-                   dropdownButton(
-                     circle = FALSE,
-                     status = "success",
-                     label = "Download Selected",
-                     icon = icon("download"),
-                     tooltip = tooltipOptions(title = "Choose format"),
-                     actionButton("trigger_json_selected", "Download JSON", class = "btn-link"),
-                     actionButton("trigger_csv_selected", "Download CSV", class = "btn-link")
-                   ),
-                   checkboxInput("select_all", "Select All", value = FALSE)
-                 )
-          )
+        dropdownButton(
+          circle = FALSE,
+          status = "primary",
+          label = "Download",
+          icon = icon("download"),
+          tooltip = tooltipOptions(title = "Choose what to download"),
+          
+          # Download type selector
+          radioButtons("download_option", label = NULL,
+                       choices = c("All Records" = "all", 
+                                   "Filtered Records" = "filtered", 
+                                   "Selected Records" = "selected"),
+                       selected = "all"),
+          
+          # Wrapped Confirm Download button with proper styling
+          div(style = "width: 100%;",
+              downloadButton("download_csv", "Confirm Download", class = "btn btn-success text-white btn-block"))
         ),
+        
+        
         fluidRow(
           column(6, offset = 3, uiOutput("paper_cards"))
         ),

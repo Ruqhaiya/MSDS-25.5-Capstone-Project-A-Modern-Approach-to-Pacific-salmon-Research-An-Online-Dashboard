@@ -249,3 +249,37 @@ label, .control-label {
 .metadata-light {
   color: #666;
 }
+
+/* --- Responsive paper card layout fixes --- */
+.paper-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.paper-meta-item {
+  flex: 1 1 240px;
+  min-width: 180px;
+  max-width: 100%;
+  font-size: 13px;
+  word-break: break-word;
+  white-space: normal !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile fallback */
+@media screen and (max-width: 768px) {
+  .paper-meta-row {
+    flex-direction: column;
+  }
+
+  .paper-meta-item {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
+  }
+}
