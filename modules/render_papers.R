@@ -57,21 +57,21 @@ render_papers_server <- function(output, paginated_data, input, session) {
             div(class = "paper-meta-row",
               HTML(format_field("Common Name", paper$species_common_name, TRUE)),
               HTML(format_field("Life Stage", paper$life_stages, TRUE)),
-              HTML(format_field("Type", paper$research_article_type)),
+              HTML(format_field("Type", paper$research_article_type, TRUE)),
               HTML(format_field("Activity", paper$activity, TRUE))
             ),
             div(class = "paper-meta-row",
               HTML(format_field("Stressor", paper$stressor_name, TRUE)),
               HTML(format_field("Metric", paper$specific_stressor_metric, TRUE)),
-              HTML(format_field("Broad Stressor", paper$broad_stressor_name)),
+              HTML(format_field("Broad Stressor", paper$broad_stressor_name, TRUE)),
               HTML(format_field("Genus Latin", paper$genus_latin, TRUE))
 
             ),
             div(class = "paper-meta-row",
-              HTML(format_field("River/Creek", paper$location_river_creek)),
-              HTML(format_field("Watershed/Lab", paper$location_watershed_lab)),
-              HTML(format_field("State/Province", paper$location_state_province)),
-              HTML(format_field("Country", paper$location_country))
+              HTML(format_field("River/Creek", paper$location_river_creek, TRUE)),
+              HTML(format_field("Watershed/Lab", paper$location_watershed_lab, TRUE)),
+              HTML(format_field("State/Province", paper$location_state_province, TRUE)),
+              HTML(format_field("Country", paper$location_country, TRUE))
             )
 
         )
