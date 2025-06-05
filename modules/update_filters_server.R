@@ -76,46 +76,58 @@ update_filters_server <- function(input, output, session, data, db) {
     }
   }
   
-  # helper: clean and split life_stages if needed
+  # Helper: apply a filter conditionally
+  apply_filter <- function(df, vals, col, regex) {
+    if (is.null(vals) || length(vals) == 0) return(df)
+    if (regex) {
+      keep <- Reduce(`|`, lapply(vals, function(v) {
+        grepl(v, df[[col]], ignore.case = TRUE)
+      }), init = FALSE)
+      df[keep, ]
+    } else {
+      df[df[[col]] %in% vals, ]
+    }
+  }
+  
+  # Helper: clean comma-separated life_stages
   clean_life_stages <- function(vec) {
     parts <- unique(unlist(strsplit(vec, ","), use.names = FALSE))
     parts <- trimws(gsub('["\\[\\]]', "", parts))
     parts[parts != ""]
   }
   
+  # Observe and update all filters based on current selections
   observe({
-    # iterate over each filter
     for (name in names(filter_specs)) {
       spec <- filter_specs[[name]]
       
-      # -- cascade-filter data by ALL OTHER filters --
+      # Filter data using all OTHER filters
       df_sub <- data
       for (other in filter_specs[names(filter_specs) != name]) {
-        vals <- input[[ other$input_id ]]
+        vals <- input[[other$input_id]]
         df_sub <- apply_filter(df_sub, vals, other$column, other$regex)
       }
       
-      # -- get lookup-table values --
+      # Get full set of lookup values
       lookup_vals <- dbGetQuery(db,
                                 sprintf("SELECT name FROM %s ORDER BY name", spec$table)
       )$name
       
-      # -- get dynamic values still present in the cascade --
-      if (spec$input_id == "life_stage") {
-        dynamic_vals <- clean_life_stages(df_sub[[ spec$column ]])
+      # Get dynamic subset based on filtered data
+      if (spec$regex) {
+        dynamic_vals <- clean_life_stages(df_sub[[spec$column]])
       } else {
-        dynamic_vals <- unique(df_sub[[ spec$column ]])
+        dynamic_vals <- unique(df_sub[[spec$column]])
         dynamic_vals <- dynamic_vals[!is.na(dynamic_vals)]
       }
       
-      # -- union & sort --
-      all_choices <- sort(unique(c(lookup_vals, dynamic_vals)))
+      # Intersect: only show valid choices in UI
+      valid_choices <- lookup_vals[lookup_vals %in% dynamic_vals]
       
-      # -- push into the pickerInput --
+      # Update filter with valid choices only
       updatePickerInput(session, spec$input_id,
-                        choices  = all_choices,
-                        selected = intersect(input[[ spec$input_id ]], all_choices)
-      )
+                        choices  = valid_choices,
+                        selected = intersect(input[[spec$input_id]], valid_choices))
     }
   })
 }
