@@ -32,10 +32,9 @@ render_papers_server <- function(output, paginated_data, input, session) {
         
         div(
           class = "hover-highlight",
-          style = "padding: 8px 12px; margin: 6px auto; border-radius: 6px;
-          width: 100%; max-width: 900px;
-          display: flex; align-items: flex-start; justify-content: flex-start;
-          border: 1px solid #ddd; background-color: #f9f9f9; min-height: 80px;",
+          style = "padding: 8px 12px; margin: 6px auto; border-radius: 6px; width: 95%;
+                display: flex; align-items: flex-start; justify-content: flex-start;
+                border: 1px solid #ddd; background-color: #f9f9f9; min-height: 80px;",
 
         # Checkbox
         div(style = "margin-right: 10px; margin-top: 5px;",
