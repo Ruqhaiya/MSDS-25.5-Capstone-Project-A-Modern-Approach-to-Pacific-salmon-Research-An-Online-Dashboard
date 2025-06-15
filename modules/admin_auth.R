@@ -1,12 +1,11 @@
 library(shiny)
 
 # UI: shows a password box + login button
-
 adminAuthUI <- function(id) {
   ns <- NS(id)
   tagList(
-    passwordInput(ns("pwd"),   "Admin password:"),
-    actionButton(ns("login"),  "Login", class = "btn-primary"),
+    passwordInput(ns("pwd"), "Admin password:"),
+    actionButton(ns("login"), "Login", class = "btn-primary"),
     tags$hr()
   )
 }
@@ -17,13 +16,26 @@ adminAuthServer <- function(id, correct_pw = "secret123") {
   moduleServer(id, function(input, output, session) {
     logged_in <- reactiveVal(FALSE)
     
-    observeEvent(input$login, {
+    # Actual login function logic
+    do_login <- function() {
       req(input$pwd)
       if (input$pwd == correct_pw) {
         logged_in(TRUE)
         showNotification("🔓 Admin unlocked", type = "message")
       } else {
         showNotification("❌ Wrong password", type = "error")
+      }
+    }
+    
+    # Trigger login on button click
+    observeEvent(input$login, {
+      do_login()
+    })
+    
+    # Trigger login on pressing Enter (i.e. pwd input updated)
+    observeEvent(input$pwd, {
+      if (!logged_in()) {  # avoid triggering after already logged in
+        do_login()
       }
     })
     
