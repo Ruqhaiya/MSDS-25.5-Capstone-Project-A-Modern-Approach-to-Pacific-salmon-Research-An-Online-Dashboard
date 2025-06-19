@@ -201,14 +201,25 @@ render_article_server <- function(input, output, session, paper_id, db) {
   }
 
   # Table
+#   output$csv_table <- renderTable({
+#   if (nrow(df) == 0) return(data.frame(Message = "No data available for this article"))
+
+#   colnames(df) <- gsub("\\.", " ", colnames(df))  # Replace dots with spaces
+#   colnames(df)[1] <- safe_get(paper, "stressor_name")
+#   df
+# })
+
   output$csv_table <- renderTable({
-  if (nrow(df) == 0) return(data.frame(Message = "No data available for this article"))
-
-  colnames(df) <- gsub("\\.", " ", colnames(df))  # Replace dots with spaces
-  colnames(df)[1] <- safe_get(paper, "stressor_name")
-  df
-})
-
+    if (nrow(df) == 0 || ncol(df) == 0) {
+      return(data.frame(Message = "No data available for this article"))
+    }
+    
+    colnames(df) <- gsub("\\.", " ", colnames(df))
+    if (ncol(df) >= 1) {
+      colnames(df)[1] <- safe_get(paper, "stressor_name")[1]
+    }
+    df
+  })
 
   # Static Plot
   output$stressor_plot <- renderPlot({
