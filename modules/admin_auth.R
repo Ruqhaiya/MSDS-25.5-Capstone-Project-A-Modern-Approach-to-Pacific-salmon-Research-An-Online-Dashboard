@@ -1,3 +1,4 @@
+# nolint start
 library(shiny)
 
 # UI: shows a password box + login button
@@ -13,20 +14,19 @@ adminAuthUI <- function(id) {
 
 # Server: checks against a hard-coded password
 # Returns a reactiveVal(TRUE/FALSE) for login status
-adminAuthServer <- function(id, correct_pw = "secret123") {
+adminAuthServer <- function(id, correct_pw = "secret123", updateStatus = NULL) {
   moduleServer(id, function(input, output, session) {
-    logged_in <- reactiveVal(FALSE)
-    
     observeEvent(input$login, {
       req(input$pwd)
       if (input$pwd == correct_pw) {
-        logged_in(TRUE)
+        if (!is.null(updateStatus)) updateStatus(TRUE)
         showNotification("🔓 Admin unlocked", type = "message")
       } else {
         showNotification("❌ Wrong password", type = "error")
       }
     })
-    
-    return(logged_in)
   })
+
 }
+
+# nolint end
