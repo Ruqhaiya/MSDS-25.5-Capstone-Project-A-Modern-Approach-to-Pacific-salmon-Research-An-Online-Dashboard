@@ -60,6 +60,9 @@ filter_data_server <- function(input, data, session) {
     if (!is.null(input$broad_stressor_name) && length(input$broad_stressor_name) > 0) {
       data_filtered <- data_filtered[data_filtered$broad_stressor_name %in% input$broad_stressor_name, ]
     }
+    if (!is.null(input$stressor) && length(input$stressor) > 0) {
+      data_filtered <- data_filtered[data_filtered$stressor_name %in% input$stressor, ]
+    }
 
     # Search
     if (!is.null(input$search) && input$search != "") {

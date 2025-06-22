@@ -30,9 +30,9 @@ render_papers_server <- function(output, paginated_data, input, session) {
         article_url <- paste0("?main_id=", paper$main_id)
         checkbox_id <- paste0("select_article_", paper$main_id)
         
-      div(
-        class = "hover-highlight",
-        style = "padding: 8px 12px; margin: 6px auto; border-radius: 6px; width: 95%;
+        div(
+          class = "hover-highlight",
+          style = "padding: 8px 12px; margin: 6px auto; border-radius: 6px; width: 95%;
                 display: flex; align-items: flex-start; justify-content: flex-start;
                 border: 1px solid #ddd; background-color: #f9f9f9; min-height: 80px;",
 
@@ -56,21 +56,21 @@ render_papers_server <- function(output, paginated_data, input, session) {
             div(class = "paper-meta-row",
               HTML(format_field("Common Name", paper$species_common_name, TRUE)),
               HTML(format_field("Life Stage", paper$life_stages, TRUE)),
-              HTML(format_field("Type", paper$research_article_type)),
+              HTML(format_field("Type", paper$research_article_type, TRUE)),
               HTML(format_field("Activity", paper$activity, TRUE))
             ),
             div(class = "paper-meta-row",
               HTML(format_field("Stressor", paper$stressor_name, TRUE)),
               HTML(format_field("Metric", paper$specific_stressor_metric, TRUE)),
-              HTML(format_field("Broad Stressor", paper$broad_stressor_name)),
+              HTML(format_field("Broad Stressor", paper$broad_stressor_name, TRUE)),
               HTML(format_field("Genus Latin", paper$genus_latin, TRUE))
 
             ),
             div(class = "paper-meta-row",
-              HTML(format_field("River/Creek", paper$location_river_creek)),
-              HTML(format_field("Watershed/Lab", paper$location_watershed_lab)),
-              HTML(format_field("State/Province", paper$location_state_province)),
-              HTML(format_field("Country", paper$location_country))
+              HTML(format_field("River/Creek", paper$location_river_creek, TRUE)),
+              HTML(format_field("Watershed/Lab", paper$location_watershed_lab, TRUE)),
+              HTML(format_field("State/Province", paper$location_state_province, TRUE)),
+              HTML(format_field("Country", paper$location_country, TRUE))
             )
 
         )
