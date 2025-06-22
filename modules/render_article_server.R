@@ -200,14 +200,22 @@ render_article_server <- function(input, output, session, paper_id, db) {
     df <- data.frame()
   }
 
-  # Table
-  output$csv_table <- renderTable({
-  if (nrow(df) == 0) return(data.frame(Message = "No data available for this article"))
 
-  colnames(df) <- gsub("\\.", " ", colnames(df))  # Replace dots with spaces
-  colnames(df)[1] <- safe_get(paper, "stressor_name")
-  df
-})
+  output$csv_table <- renderTable({
+    if (nrow(df) == 0 || ncol(df) == 0) {
+      return(data.frame(Message = "No data available for this article"))
+    }
+
+    colnames(df) <- gsub("\\.", " ", colnames(df))
+
+    # Only relabel column if df has at least 1 column and exactly 1 label
+    stressor_name_val <- safe_get(paper, "stressor_name")
+    if (ncol(df) >= 1 && length(stressor_name_val) == 1) {
+      colnames(df)[1] <- stressor_name_val
+    }
+
+    df
+  })
 
 
   # Static Plot
@@ -230,29 +238,32 @@ render_article_server <- function(input, output, session, paper_id, db) {
 
   # Interactive Plot
   output$interactive_plot <- renderPlotly({
-  if (nrow(df) == 0) {
-    return(plot_ly(type = "scatter", mode = "markers", height = 200) %>%
-             layout(
-               margin = list(t = 20, b = 20),
-               xaxis = list(visible = FALSE), yaxis = list(visible = FALSE),
-               annotations = list(list(
-                 text = "No data available for this article",
-                 xref = "paper", yref = "paper",
-                 x = 0.5, y = 0.5, showarrow = FALSE,
-                 font = list(size = 16, color = "black")
-               ))
-             ))
-  }
+    if (is.null(df) || nrow(df) == 0 || ncol(df) < 2 ||
+        all(is.na(df[[1]])) || all(is.na(df[[2]]))) {
+      
+      return(plot_ly(type = "scatter", mode = "markers", height = 200) %>%
+              layout(
+                margin = list(t = 20, b = 20),
+                xaxis = list(visible = FALSE), yaxis = list(visible = FALSE),
+                annotations = list(list(
+                  text = "No data available for this article",
+                  xref = "paper", yref = "paper",
+                  x = 0.5, y = 0.5, showarrow = FALSE,
+                  font = list(size = 16, color = "black")
+                ))
+              ))
+    }
 
-  plot_ly(df, x = ~df[[1]], y = ~df[[2]],
-          type = "scatter", mode = "lines+markers",
-          line = list(color = "blue"), marker = list(size = 6)) %>%
-    layout(
-      title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
-      xaxis = list(title = safe_get(paper, "stressor_name")),
-      yaxis = list(title = gsub("\\.", " ", names(df)[2]))
-    )
-})
+    plot_ly(df, x = ~df[[1]], y = ~df[[2]],
+            type = "scatter", mode = "lines+markers",
+            line = list(color = "blue"), marker = list(size = 6)) %>%
+      layout(
+        title = paste("Interactive Plot for", safe_get(paper, "stressor_name")),
+        xaxis = list(title = safe_get(paper, "stressor_name")),
+        yaxis = list(title = gsub("\\.", " ", names(df)[2]))
+      )
+  })
+
 
 }
 
