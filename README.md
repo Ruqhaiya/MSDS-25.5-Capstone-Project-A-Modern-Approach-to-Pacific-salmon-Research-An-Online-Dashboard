@@ -1,9 +1,10 @@
-# MSDS-25.5
+# MSDS-25.5 - NOAA Fisheries Capstone Project
 
 #### Check out the slide deck for a quick overview of the project. 
+I spent an insane amount of time on this!
 > 🔗 **[SLIDES](https://www.figma.com/slides/AphcX38ejQTjJgArRaCV2j/NOAA_Slides?node-id=59-1146&t=2kh8fvjlamIpNmbh-1)**
 
-#### Check out the word document titled 'MSDS_25.5_Project_Report' for the what-why-how of the project. 
+#### Check out the word document titled 'MSDS_25.5_Project_Report' for the what-why-and-how of the project. 
 
 ---
 
@@ -13,7 +14,12 @@ People hear about Pacific salmon all the time in the Pacific Northwest, but thei
 
 ---
 
+## Images (If your eyes hate texts):
 
+#### **Main Page**
+
+
+####
 
 
 # Important links:
