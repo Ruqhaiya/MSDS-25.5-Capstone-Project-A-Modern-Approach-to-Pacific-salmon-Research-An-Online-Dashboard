@@ -1,7 +1,7 @@
 # MSDS-25.5
 
-## Check out the slide deck for a quick overview of the project. 
-## Check out the word document titled 'MSDS_25.5_Project_Report' for all the details about the what-why-how of the project. 
+#### Check out the slide deck for a quick overview of the project. 
+#### Check out the word document titled 'MSDS_25.5_Project_Report' for all the details about the what-why-how of the project. 
 
 ---
 
