@@ -1,6 +1,7 @@
 # MSDS-25.5 - NOAA Fisheries Capstone Project (**[Dashboard Link](https://ruqhaiya.shinyapps.io/NOAA_SRF_Dashboard/)**)
 
-The app is live on NOAA's server too: [Link-to-noaa=server](https://connect.fisheries.noaa.gov/salmon_stressor_response_library/)
+#### The app is live on NOAA's server too: **[Link-to-noaa-server](https://connect.fisheries.noaa.gov/salmon_stressor_response_library/)**
+
 #### Check out the slide deck for a quick overview of the project. 
 I spent an insane amount of time on this deck!
 > 🔗 **[SLIDES](https://www.figma.com/slides/AphcX38ejQTjJgArRaCV2j/NOAA_Slides?node-id=59-1146&t=2kh8fvjlamIpNmbh-1)**
