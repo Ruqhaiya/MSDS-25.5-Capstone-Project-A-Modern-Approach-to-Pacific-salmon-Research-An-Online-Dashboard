@@ -1,11 +1,12 @@
 # MSDS-25.5 - NOAA Fisheries Capstone Project
 
 #### Check out the slide deck for a quick overview of the project. 
-I spent an insane amount of time on this!
+I spent an insane amount of time on this deck!
 > 🔗 **[SLIDES](https://www.figma.com/slides/AphcX38ejQTjJgArRaCV2j/NOAA_Slides?node-id=59-1146&t=2kh8fvjlamIpNmbh-1)**
 
 #### Check out the word document titled 'MSDS_25.5_Project_Report' for the what-why-and-how of the project. 
-
+> 🔗 [Report](https://github.com/Ruqhaiya/MSDS-25.5-Capstone-Project-A-Modern-Approach-to-Pacific-salmon-Research-An-Online-Dashboard/blob/main/MSDS_25.5_Project_Report.pdf)
+> 
 ---
 
 ## Abstract (If you're in a hurry):
