@@ -1,4 +1,4 @@
-# MSDS-25.5 - NOAA Fisheries Capstone Project (**[Dashboard Link](https://ruqhaiya.shinyapps.io/NOAA_SRF)**)
+# MSDS-25.5 - NOAA Fisheries Capstone Project (**[Dashboard Link](https://ruqhaiya.shinyapps.io/NOAA_SRF_Dashboard/)**)
 
 #### Check out the slide deck for a quick overview of the project. 
 I spent an insane amount of time on this deck!
