@@ -3,7 +3,7 @@
 #### Check out the slide deck for a quick overview of the project. 
 > 🔗 **[SLIDES](https://www.figma.com/slides/AphcX38ejQTjJgArRaCV2j/NOAA_Slides?node-id=59-1146&t=2kh8fvjlamIpNmbh-1)**
 
-#### Check out the word document titled 'MSDS_25.5_Project_Report' for all the details about the what-why-how of the project. 
+#### Check out the word document titled 'MSDS_25.5_Project_Report' for the what-why-how of the project. 
 
 ---
 
