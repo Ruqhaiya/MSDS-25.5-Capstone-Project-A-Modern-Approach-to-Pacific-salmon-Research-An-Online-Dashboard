@@ -1,11 +1,11 @@
-# MSDS-25.5 - NOAA Fisheries Capstone Project ([Dashboard Link](https://ruqhaiya.shinyapps.io/NOAA_SRF)*)
+# MSDS-25.5 - NOAA Fisheries Capstone Project (**[Dashboard Link](https://ruqhaiya.shinyapps.io/NOAA_SRF)**)
 
 #### Check out the slide deck for a quick overview of the project. 
 I spent an insane amount of time on this deck!
 > 🔗 **[SLIDES](https://www.figma.com/slides/AphcX38ejQTjJgArRaCV2j/NOAA_Slides?node-id=59-1146&t=2kh8fvjlamIpNmbh-1)**
 
 #### Check out the word document titled 'MSDS_25.5_Project_Report' for the what-why-and-how of the project. 
-> 🔗 [Report](https://github.com/Ruqhaiya/MSDS-25.5-Capstone-Project-A-Modern-Approach-to-Pacific-salmon-Research-An-Online-Dashboard/blob/main/MSDS_25.5_Project_Report.pdf)
+> 🔗 **[Report](https://github.com/Ruqhaiya/MSDS-25.5-Capstone-Project-A-Modern-Approach-to-Pacific-salmon-Research-An-Online-Dashboard/blob/main/MSDS_25.5_Project_Report.pdf)**
 > 
 ---
 
@@ -15,7 +15,7 @@ People hear about Pacific salmon all the time in the Pacific Northwest, but thei
 
 ---
 
-## Slide deck (If your eyes hate texts, jump to the [Demo](#demo)): 
+## Slide deck (If your eyes hate texts, jump to the **[Demo](#demo)**): 
 
 ![NOAA_Slide_deckk_pages-to-jpg-0001](https://github.com/user-attachments/assets/57f9c88e-5b5f-424f-b7a7-4ce9ca5b443e)
 
